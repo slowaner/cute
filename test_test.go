@@ -216,30 +216,6 @@ func TestSanitizeURLHook(t *testing.T) {
 	require.Equal(t, "key=****", decodedQuery)
 }
 
-func TestSanitizeURL_LastRequestURL(t *testing.T) {
-	client := &http.Client{
-		Transport: &mockRoundTripper{},
-	}
-
-	test := &Test{
-		httpClient: client,
-		Request: &Request{
-			Builders: []RequestBuilder{
-				WithMethod(http.MethodGet),
-				WithURI("http://localhost/api?key=123"),
-			},
-		},
-		RequestSanitizer: sanitizeKeyParam("****"),
-	}
-
-	allureT := createAllureT(t)
-	test.Execute(context.Background(), allureT)
-
-	decodedURL, err := url.QueryUnescape(test.lastRequestURL)
-	require.NoError(t, err)
-	require.Contains(t, decodedURL, "key=****", "Expected masked key in lastRequestURL")
-}
-
 func sanitizeKeyParam(mask string) RequestSanitizerHook {
 	return func(req *http.Request) {
 		q := req.URL.Query()

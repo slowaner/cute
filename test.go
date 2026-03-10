@@ -41,9 +41,8 @@ type ResponseSanitizerHook func(resp *http.Response)
 // You may field Request and Expect for create simple test
 // Parallel can be used to control the parallelism of a Test
 type Test struct {
-	httpClient     *http.Client
-	jsonMarshaler  JSONMarshaler
-	lastRequestURL string
+	httpClient    *http.Client
+	jsonMarshaler JSONMarshaler
 
 	Name     string
 	Parallel bool
@@ -53,6 +52,12 @@ type Test struct {
 	Middleware *Middleware
 	Request    *Request
 	Expect     *Expect
+
+	RequestInformation  []RequestInformation
+	RequestInformationT []RequestInformationT
+
+	ResponseInformation  []ResponseInformation
+	ResponseInformationT []ResponseInformationT
 
 	RequestSanitizer  RequestSanitizerHook
 	ResponseSanitizer ResponseSanitizerHook
@@ -152,15 +157,14 @@ func (it *Test) Execute(ctx context.Context, t tProvider) ResultsHTTPBuilder {
 		return it.executeInsideStep(ctx, stepCtx)
 	}
 
-	tOriginal, ok := t.(*testing.T)
-	if ok {
-		tOriginal.Helper()
-		internalT = createAllureT(tOriginal)
-	}
-
-	allureT, ok := t.(provider.T)
-	if ok {
-		internalT = allureT
+	switch v := t.(type) {
+	case provider.T:
+		internalT = v
+	case *testing.T:
+		v.Helper()
+		internalT = createAllureT(v)
+	default:
+		panic("could not start test without testing.T or provider.T")
 	}
 
 	internalT.Run(it.Name, func(inT provider.T) {
@@ -286,14 +290,14 @@ func (it *Test) startRepeatableTest(ctx context.Context, t internalT) ResultsHTT
 
 	switch resultState {
 	case ResultStateBroken:
-		t.BrokenNow()
 		it.Info(t, "Test broken")
+		t.BrokenNow()
 	case ResultStateFail:
+		it.Error(t, "Test failed")
 		t.Fail()
-		it.Error(t, "Test failed")
 	case resultStateFailNow:
-		t.FailNow()
 		it.Error(t, "Test failed")
+		t.FailNow()
 	case ResultStateSuccess:
 		it.Info(t, "Test finished successfully")
 	}
