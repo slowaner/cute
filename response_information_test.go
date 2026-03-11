@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/ozontech/allure-go/pkg/allure"
@@ -297,7 +298,7 @@ func TestResponseBodyInformationT_WithJSONBody(t *testing.T) {
 		Header: http.Header{
 			"Content-Type": {"application/json"},
 		},
-		Body: &readCloser{data: []byte(`{"key":"value","number":123}`)},
+		Body: io.NopCloser(strings.NewReader(`{"key":"value","number":123}`)),
 	}
 
 	allureT := createAllureT(t)
@@ -322,7 +323,7 @@ func TestResponseBodyInformationT_WithTextBody(t *testing.T) {
 		Header: http.Header{
 			"Content-Type": {"text/plain"},
 		},
-		Body: &readCloser{data: []byte("plain text response")},
+		Body: io.NopCloser(strings.NewReader("plain text response")),
 	}
 
 	allureT := createAllureT(t)
@@ -384,7 +385,7 @@ func TestResponseBodyInformationT_CustomMimeType(t *testing.T) {
 		Header: http.Header{
 			"Content-Type": {"text/html; charset=utf-8"},
 		},
-		Body: &readCloser{data: []byte("<html><body>test</body></html>")},
+		Body: io.NopCloser(strings.NewReader("<html><body>test</body></html>")),
 	}
 
 	allureT := createAllureT(t)
@@ -431,25 +432,4 @@ func TestResponseInformation_IntegratesWithResponseBodyInformationT(t *testing.T
 	require.Len(t, capturedT.captured.attachments, 1)
 	attachment := getAttachment(capturedT.captured.attachments, "response")
 	require.NotNil(t, attachment)
-}
-
-// Helper types for testing
-
-type readCloser struct {
-	data []byte
-	pos  int
-}
-
-func (r *readCloser) Read(p []byte) (n int, err error) {
-	if r.pos >= len(r.data) {
-		return 0, io.EOF
-	}
-	copy(p, r.data[r.pos:])
-	n = len(r.data) - r.pos
-	r.pos = len(r.data)
-	return n, nil
-}
-
-func (r *readCloser) Close() error {
-	return nil
 }

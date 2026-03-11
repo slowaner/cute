@@ -298,14 +298,16 @@ func TestRequestHTTPBaseInformation_DifferentMethods(t *testing.T) {
 	methods := []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodPatch}
 
 	for _, method := range methods {
-		req, err := http.NewRequest(method, "http://api.test.com/resource", nil)
-		require.NoError(t, err)
+		t.Run(method, func(t *testing.T) {
+			req, err := http.NewRequest(method, testServerAddress+"/resource", nil)
+			require.NoError(t, err)
 
-		params, err := RequestHTTPBaseInformation(req)
+			params, err := RequestHTTPBaseInformation(req)
 
-		require.NoError(t, err)
-		require.NotNil(t, params)
-		require.Equal(t, method, getParameterValue(params, "method"))
+			require.NoError(t, err)
+			require.NotNil(t, params)
+			require.Equal(t, method, getParameterValue(params, "method"))
+		})
 	}
 }
 
