@@ -11,7 +11,7 @@ func TestFillBaseProps_WhenBasePropsIsNil(t *testing.T) {
 	testObj := &Test{}
 	cuteObj := &cute{}
 
-	cuteObj.fillBaseProps(testObj)
+	cuteObj.fillProps(testObj)
 
 	require.Nil(t, testObj.httpClient)
 	require.Nil(t, testObj.jsonMarshaler)
@@ -53,7 +53,7 @@ func TestFillBaseProps_WhenBasePropsIsNotNil(t *testing.T) {
 	}
 	cuteObj.baseProps = qtBaseProps
 
-	cuteObj.fillBaseProps(testObj)
+	cuteObj.fillProps(testObj)
 
 	require.Equal(t, qtBaseProps.httpClient, testObj.httpClient)
 	require.Equal(t, qtBaseProps.jsonMarshaler, testObj.jsonMarshaler)
@@ -97,7 +97,7 @@ func TestFillBaseProps_WhenBasePropsIsNotNil_After(t *testing.T) {
 	}
 	cuteObj.baseProps = qtBaseProps
 
-	cuteObj.fillBaseProps(testObj)
+	cuteObj.fillProps(testObj)
 
 	require.Equal(t, qtBaseProps.httpClient, testObj.httpClient)
 	require.Equal(t, qtBaseProps.jsonMarshaler, testObj.jsonMarshaler)
@@ -183,7 +183,7 @@ func TestFillBaseProps_WhenBasePropsIsNotNil_Middleware(t *testing.T) {
 	}
 	cuteObj.baseProps = qtBaseProps
 
-	cuteObj.fillBaseProps(testObj)
+	cuteObj.fillProps(testObj)
 
 	require.Equal(t, qtBaseProps.httpClient, testObj.httpClient)
 	require.Equal(t, qtBaseProps.jsonMarshaler, testObj.jsonMarshaler)

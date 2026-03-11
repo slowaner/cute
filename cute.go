@@ -24,6 +24,12 @@ type cute struct {
 
 	isTableTest bool
 	tests       []*Test
+
+	// stored information callbacks for next added tests
+	reqInfo   []RequestInformation
+	reqInfoT  []RequestInformationT
+	respInfo  []ResponseInformation
+	respInfoT []ResponseInformationT
 }
 
 type allureInformation struct {

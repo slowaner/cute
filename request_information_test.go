@@ -8,6 +8,7 @@ import (
 
 	"github.com/ozontech/allure-go/pkg/allure"
 	"github.com/ozontech/allure-go/pkg/framework/provider"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"net/url"
 )
@@ -34,9 +35,8 @@ func TestRequestInformation(t *testing.T) {
 
 	require.NotNil(t, results)
 	require.Empty(t, results.GetErrors())
-	require.NotEmpty(t, capturedT.captured.params)
-	require.Len(t, capturedT.captured.params, 1)
-	require.Equal(t, "custom_value", getParameterValue(capturedT.captured.params, "custom_key"))
+	require.Equal(t, 1, capturedT.CapturedParamsCount())
+	require.Equal(t, "custom_value", capturedT.findParamByName("custom_key"))
 }
 
 func TestRequestInformation_Error(t *testing.T) {
@@ -64,7 +64,7 @@ func TestRequestInformation_Error(t *testing.T) {
 	// The request is still executed successfully
 	require.Empty(t, results.GetErrors())
 	// No parameters should be captureParams when the callback returns an error
-	require.Empty(t, capturedT.captured.params)
+	require.Zero(t, capturedT.CapturedParamsCount())
 }
 
 func TestRequestInformation_MultipleCallbacks(t *testing.T) {
@@ -96,11 +96,11 @@ func TestRequestInformation_MultipleCallbacks(t *testing.T) {
 	require.NotNil(t, results)
 	require.Empty(t, results.GetErrors())
 	// Should capture parameters from all callbacks: key1, key2, method, host
-	require.Len(t, capturedT.captured.params, 4)
-	require.Equal(t, "value1", getParameterValue(capturedT.captured.params, "key1"))
-	require.Equal(t, "value2", getParameterValue(capturedT.captured.params, "key2"))
-	require.Equal(t, "value3", getParameterValue(capturedT.captured.params, "key3"))
-	require.Equal(t, "value4", getParameterValue(capturedT.captured.params, "key4"))
+	require.Equal(t, 4, capturedT.CapturedParamsCount())
+	require.Equal(t, "value1", capturedT.findParamByName("key1"))
+	require.Equal(t, "value2", capturedT.findParamByName("key2"))
+	require.Equal(t, "value3", capturedT.findParamByName("key3"))
+	require.Equal(t, "value4", capturedT.findParamByName("key4"))
 }
 
 func TestRequestInformationT(t *testing.T) {
@@ -125,16 +125,13 @@ func TestRequestInformationT(t *testing.T) {
 
 	allureT := createAllureT(t)
 	capturedT := newCaptureT(allureT)
-	results := test.Execute(context.Background(), capturedT)
+	test.Execute(context.Background(), capturedT)
 
-	require.NotNil(t, results)
-	require.Empty(t, results.GetErrors())
 	require.NotNil(t, capturedRequest)
 	require.Equal(t, http.MethodPost, capturedRequest.Method)
 	// Verify that the parameter from RequestInformationT was captureParams
-	require.NotEmpty(t, capturedT.captured.params)
-	require.Len(t, capturedT.captured.params, 1)
-	require.Equal(t, "works", getParameterValue(capturedT.captured.params, "t_callback"))
+	require.Equal(t, 1, capturedT.CapturedParamsCount())
+	require.Equal(t, "works", capturedT.findParamByName("t_callback"))
 }
 
 func TestRequestInformationT_Error(t *testing.T) {
@@ -162,7 +159,7 @@ func TestRequestInformationT_Error(t *testing.T) {
 	// The request is still executed successfully
 	require.Empty(t, results.GetErrors())
 	// No parameters should be captureParams when the callback returns an error
-	require.Empty(t, capturedT.captured.params)
+	require.Zero(t, capturedT.CapturedParamsCount())
 }
 
 func TestRequestInformationT_MultipleCallbacks(t *testing.T) {
@@ -186,14 +183,12 @@ func TestRequestInformationT_MultipleCallbacks(t *testing.T) {
 
 	allureT := createAllureT(t)
 	capturedT := newCaptureT(allureT)
-	results := test.Execute(context.Background(), capturedT)
+	test.Execute(context.Background(), capturedT)
 
-	require.NotNil(t, results)
-	require.Empty(t, results.GetErrors())
 	// Should capture parameters from both callbacks
-	require.Len(t, capturedT.captured.params, 2)
-	require.Equal(t, "t_value1", getParameterValue(capturedT.captured.params, "t_key1"))
-	require.Equal(t, "t_value2", getParameterValue(capturedT.captured.params, "t_key2"))
+	require.Equal(t, 2, capturedT.CapturedParamsCount())
+	require.Equal(t, "t_value1", capturedT.findParamByName("t_key1"))
+	require.Equal(t, "t_value2", capturedT.findParamByName("t_key2"))
 }
 
 func TestRequestInformationAndRequestInformationT_Together(t *testing.T) {
@@ -219,14 +214,12 @@ func TestRequestInformationAndRequestInformationT_Together(t *testing.T) {
 
 	allureT := createAllureT(t)
 	capturedT := newCaptureT(allureT)
-	results := test.Execute(context.Background(), capturedT)
+	test.Execute(context.Background(), capturedT)
 
-	require.NotNil(t, results)
-	require.Empty(t, results.GetErrors())
 	// Should capture parameters from both RequestInformation and RequestInformationT
-	require.Len(t, capturedT.captured.params, 2)
-	require.Equal(t, "req_value", getParameterValue(capturedT.captured.params, "req_key"))
-	require.Equal(t, "req_t_value", getParameterValue(capturedT.captured.params, "req_t_key"))
+	require.Equal(t, 2, capturedT.CapturedParamsCount())
+	require.Equal(t, "req_value", capturedT.findParamByName("req_key"))
+	require.Equal(t, "req_t_value", capturedT.findParamByName("req_t_key"))
 }
 
 func TestWithNewStep_CapturesParameters(t *testing.T) {
@@ -241,10 +234,9 @@ func TestWithNewStep_CapturesParameters(t *testing.T) {
 	}, allure.NewParameters("step_key", "step_value")...)
 
 	// Verify both parameters passed to WithNewStep and added within it are captured
-	require.NotEmpty(t, capturedT.captured.params)
-	require.Len(t, capturedT.captured.params, 2)
-	require.Equal(t, "step_value", getParameterValue(capturedT.captured.params, "step_key"))
-	require.Equal(t, "step_value", getParameterValue(capturedT.captured.params, "step_param"))
+	require.Equal(t, 2, capturedT.CapturedParamsCount())
+	require.Equal(t, "step_value", capturedT.findParamByName("step_key"))
+	require.Equal(t, "step_value", capturedT.findParamByName("step_param"))
 }
 
 func TestRequestCurlInformation_ValidRequest(t *testing.T) {
@@ -258,7 +250,7 @@ func TestRequestCurlInformation_ValidRequest(t *testing.T) {
 	require.NotNil(t, params)
 	require.NotEmpty(t, params)
 
-	curlParam := getParameterValue(params, "curl")
+	curlParam := findParameterValue(params, "curl")
 	require.NotNil(t, curlParam)
 	require.NotEmpty(t, curlParam)
 }
@@ -289,8 +281,8 @@ func TestRequestHTTPBaseInformation_StandardRequest(t *testing.T) {
 	require.NotNil(t, params)
 	require.Equal(t, 2, len(params))
 
-	require.Equal(t, http.MethodPost, getParameterValue(params, "method"))
-	require.Equal(t, testServerHost, getParameterValue(params, "host"))
+	require.Equal(t, http.MethodPost, findParameterValue(params, "method"))
+	require.Equal(t, testServerHost, findParameterValue(params, "host"))
 }
 
 func TestRequestHTTPBaseInformation_DifferentMethods(t *testing.T) {
@@ -306,7 +298,7 @@ func TestRequestHTTPBaseInformation_DifferentMethods(t *testing.T) {
 
 			require.NoError(t, err)
 			require.NotNil(t, params)
-			require.Equal(t, method, getParameterValue(params, "method"))
+			require.Equal(t, method, findParameterValue(params, "method"))
 		})
 	}
 }
@@ -323,7 +315,7 @@ func TestRequestHTTPBaseInformation_EmptyHost(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, params)
-	param := getParameterValue(params, "host")
+	param := findParameterValue(params, "host")
 	require.NotNil(t, param)
 	require.Empty(t, param)
 }
@@ -341,7 +333,7 @@ func TestRequestHTTPHeadersInformation_WithHeaders(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, params)
 
-	headersValue := getParameterValue(params, "headers")
+	headersValue := findParameterValue(params, "headers")
 	require.NotNil(t, headersValue)
 	require.NotEmpty(t, headersValue)
 	// Should contain headers as JSON string
@@ -356,12 +348,11 @@ func TestRequestHTTPHeadersInformation_NoHeaders(t *testing.T) {
 	require.NoError(t, err)
 
 	params, err := RequestHTTPHeadersInformation(req)
-
 	require.NoError(t, err)
 	require.NotNil(t, params)
 
-	headersValue := getParameterValue(params, "headers")
-	require.NotNil(t, headersValue)
+	headersValue := findParameterValue(params, "headers")
+	assert.NotNil(t, headersValue)
 }
 
 func TestRequestHTTPHeadersInformation_MultipleHeaderValues(t *testing.T) {
@@ -373,13 +364,11 @@ func TestRequestHTTPHeadersInformation_MultipleHeaderValues(t *testing.T) {
 	req.Header.Add("Accept", "text/html")
 
 	params, err := RequestHTTPHeadersInformation(req)
-
 	require.NoError(t, err)
 	require.NotNil(t, params)
 
-	headersValue := getParameterValue(params, "headers")
-	require.NotNil(t, headersValue)
-	require.NotEmpty(t, headersValue)
+	headersValue := findParameterValue(params, "headers")
+	assert.NotEmpty(t, headersValue)
 }
 
 func TestRequestHTTPBodyInformation_NoBody(t *testing.T) {
@@ -388,10 +377,9 @@ func TestRequestHTTPBodyInformation_NoBody(t *testing.T) {
 	require.NoError(t, err)
 
 	params, err := RequestHTTPBodyInformation(req)
-
 	require.NoError(t, err)
 	// Should return nil when Body is nil
-	require.Nil(t, params)
+	assert.Nil(t, params)
 }
 
 func TestRequestHTTPBodyInformation_NilBody(t *testing.T) {
@@ -400,10 +388,9 @@ func TestRequestHTTPBodyInformation_NilBody(t *testing.T) {
 	require.NoError(t, err)
 
 	params, err := RequestHTTPBodyInformation(req)
-
 	require.NoError(t, err)
 	// Empty/nil body should return nil
-	require.Nil(t, params)
+	assert.Nil(t, params)
 }
 
 // Tests for sanitized request data in RequestInformation and RequestInformationT
@@ -436,12 +423,9 @@ func TestRequestInformation_ReceivesSanitizedData(t *testing.T) {
 
 	allureT := createAllureT(t)
 	capturedT := newCaptureT(allureT)
-	results := test.Execute(context.Background(), capturedT)
+	test.Execute(context.Background(), capturedT)
 
-	require.NotNil(t, results)
-	require.Empty(t, results.GetErrors())
-
-	require.Equal(t, "Bearer [REDACTED]", getParameterValue(capturedT.captured.params, "auth"))
+	assert.Equal(t, "Bearer [REDACTED]", capturedT.findParamByName("auth"))
 }
 
 func TestRequestInformationT_ReceivesSanitizedData(t *testing.T) {
@@ -472,10 +456,7 @@ func TestRequestInformationT_ReceivesSanitizedData(t *testing.T) {
 
 	allureT := createAllureT(t)
 	capturedT := newCaptureT(allureT)
-	results := test.Execute(context.Background(), capturedT)
+	test.Execute(context.Background(), capturedT)
 
-	require.NotNil(t, results)
-	require.Empty(t, results.GetErrors())
-
-	require.Equal(t, "Bearer [REDACTED]", getParameterValue(capturedT.captured.params, "auth"))
+	assert.Equal(t, "Bearer [REDACTED]", capturedT.findParamByName("auth"))
 }

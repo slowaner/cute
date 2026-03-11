@@ -9,7 +9,13 @@ import (
 
 func TestValidateJSONSchemaEmptySchema(t *testing.T) {
 	var (
-		tBuilder = createDefaultTest(&HTTPTestMaker{middleware: new(Middleware)})
+		tBuilder = createDefaultTest(
+			&HTTPTestMaker{middleware: new(Middleware)},
+			nil,
+			nil,
+			nil,
+			nil,
+		)
 	)
 
 	tBuilder.initEmptyFields()
@@ -20,8 +26,14 @@ func TestValidateJSONSchemaEmptySchema(t *testing.T) {
 
 func TestValidateJSONSchemaFromString(t *testing.T) {
 	var (
-		tBuilder = createDefaultTest(&HTTPTestMaker{middleware: new(Middleware)})
-		tempT    = createAllureT(t)
+		tBuilder = createDefaultTest(
+			&HTTPTestMaker{middleware: new(Middleware)},
+			nil,
+			nil,
+			nil,
+			nil,
+		)
+		tempT = createAllureT(t)
 	)
 
 	tBuilder.initEmptyFields()
@@ -61,8 +73,14 @@ func TestValidateJSONSchemaFromString(t *testing.T) {
 
 func TestValidateJSONSchemaFromStringWithError(t *testing.T) {
 	var (
-		tBuilder = createDefaultTest(&HTTPTestMaker{middleware: new(Middleware)})
-		tempT    = createAllureT(t)
+		tBuilder = createDefaultTest(
+			&HTTPTestMaker{middleware: new(Middleware)},
+			nil,
+			nil,
+			nil,
+			nil,
+		)
+		tempT = createAllureT(t)
 	)
 
 	tBuilder.initEmptyFields()
@@ -111,8 +129,14 @@ func TestValidateJSONSchemaFromStringWithError(t *testing.T) {
 
 func TestValidateJSONSchemaFromByteWithTwoError(t *testing.T) {
 	var (
-		tBuilder = createDefaultTest(&HTTPTestMaker{middleware: new(Middleware)})
-		tempT    = createAllureT(t)
+		tBuilder = createDefaultTest(
+			&HTTPTestMaker{middleware: new(Middleware)},
+			nil,
+			nil,
+			nil,
+			nil,
+		)
+		tempT = createAllureT(t)
 	)
 
 	tBuilder.initEmptyFields()

@@ -76,12 +76,43 @@ type CreateBuilder interface {
 	CreateTableTest() MiddlewareTable
 }
 
+// InformationHandlersTable is a scope of methods to add request and response information handlers for table tests
+type InformationHandlersTable interface {
+	// RequestInformationTable adds request information handlers to current table test
+	RequestInformationTable(handlers ...RequestInformation) MiddlewareTable
+
+	// RequestInformationTTable adds request information handlers with T context to current table test
+	RequestInformationTTable(handlers ...RequestInformationT) MiddlewareTable
+
+	// ResponseInformationTable adds response information handlers to current table test
+	ResponseInformationTable(handlers ...ResponseInformation) MiddlewareTable
+
+	// ResponseInformationTTable adds response information handlers with T context to current table test
+	ResponseInformationTTable(handlers ...ResponseInformationT) MiddlewareTable
+}
+
 // MiddlewareTable is functions for create table Test
 type MiddlewareTable interface {
 	TableTest
 
 	BeforeTest
 	AfterTest
+	InformationHandlersTable
+}
+
+// InformationHandlers is a scope of methods to add request and response information handlers
+type InformationHandlers interface {
+	// RequestInformation adds request information handlers to capture request details
+	RequestInformation(handlers ...RequestInformation) MiddlewareRequest
+
+	// RequestInformationT adds request information handlers with T context
+	RequestInformationT(handlers ...RequestInformationT) MiddlewareRequest
+
+	// ResponseInformation adds response information handlers to capture response details
+	ResponseInformation(handlers ...ResponseInformation) MiddlewareRequest
+
+	// ResponseInformationT adds response information handlers with T context
+	ResponseInformationT(handlers ...ResponseInformationT) MiddlewareRequest
 }
 
 // MiddlewareRequest is function for create requests or add After/Before functions
@@ -91,6 +122,7 @@ type MiddlewareRequest interface {
 
 	BeforeTest
 	AfterTest
+	InformationHandlers
 }
 
 // RetryPolitic is a scope of methods to configure test repeat

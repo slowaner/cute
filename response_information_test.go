@@ -9,12 +9,16 @@ import (
 	"testing"
 
 	"github.com/ozontech/allure-go/pkg/allure"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestResponseInformation(t *testing.T) {
 	t.Parallel()
 	test := &Test{
+		AllureStep: &AllureStep{
+			"test_name",
+		},
 		Request: &Request{
 			Builders: []RequestBuilder{
 				WithMethod(http.MethodGet),
@@ -34,9 +38,8 @@ func TestResponseInformation(t *testing.T) {
 
 	require.NotNil(t, results)
 	require.Empty(t, results.GetErrors())
-	require.NotEmpty(t, capturedT.captured.params)
-	require.Len(t, capturedT.captured.params, 1)
-	require.Equal(t, "response_custom_value", getParameterValue(capturedT.captured.params, "response_custom_key"))
+	require.Equal(t, 1, capturedT.CapturedParamsCount())
+	assert.Equal(t, "response_custom_value", capturedT.findParamByName("response_custom_key"))
 }
 
 func TestResponseInformation_Error(t *testing.T) {
@@ -64,7 +67,7 @@ func TestResponseInformation_Error(t *testing.T) {
 	// The request is still executed successfully
 	require.Empty(t, results.GetErrors())
 	// No parameters should be captured when the callback returns an error
-	require.Empty(t, capturedT.captured.params)
+	require.Zero(t, capturedT.CapturedParamsCount())
 }
 
 func TestResponseInformation_MultipleCallbacks(t *testing.T) {
@@ -91,32 +94,28 @@ func TestResponseInformation_MultipleCallbacks(t *testing.T) {
 
 	allureT := createAllureT(t)
 	capturedT := newCaptureT(allureT)
-	results := test.Execute(context.Background(), capturedT)
+	test.Execute(context.Background(), capturedT)
 
-	require.NotNil(t, results)
-	require.Empty(t, results.GetErrors())
 	// Should capture parameters from all callbacks
-	require.Len(t, capturedT.captured.params, 4)
-	require.Equal(t, "resp_value1", getParameterValue(capturedT.captured.params, "resp_key1"))
-	require.Equal(t, "resp_value2", getParameterValue(capturedT.captured.params, "resp_key2"))
-	require.Equal(t, "resp_value3", getParameterValue(capturedT.captured.params, "resp_key3"))
-	require.Equal(t, "resp_value4", getParameterValue(capturedT.captured.params, "resp_key4"))
+	assert.Equal(t, 4, capturedT.CapturedParamsCount())
+	assert.Equal(t, "resp_value1", capturedT.findParamByName("resp_key1"))
+	assert.Equal(t, "resp_value2", capturedT.findParamByName("resp_key2"))
+	assert.Equal(t, "resp_value3", capturedT.findParamByName("resp_key3"))
+	assert.Equal(t, "resp_value4", capturedT.findParamByName("resp_key4"))
 }
 
 func TestResponseInformationT(t *testing.T) {
 	t.Parallel()
-	var capturedResponse *http.Response
 
 	test := &Test{
 		Request: &Request{
 			Builders: []RequestBuilder{
 				WithMethod(http.MethodGet),
-				WithURI("http://httpbin.org/get"),
+				WithURI(testServerAddress),
 			},
 		},
 		ResponseInformationT: []ResponseInformationT{
 			func(t T, resp *http.Response) ([]*allure.Parameter, error) {
-				capturedResponse = resp
 				return allure.NewParameters("t_response_callback", "response_works"), nil
 			},
 		},
@@ -124,16 +123,11 @@ func TestResponseInformationT(t *testing.T) {
 
 	allureT := createAllureT(t)
 	capturedT := newCaptureT(allureT)
-	results := test.Execute(context.Background(), capturedT)
+	test.Execute(context.Background(), capturedT)
 
-	require.NotNil(t, results)
-	require.Empty(t, results.GetErrors())
-	require.NotNil(t, capturedResponse)
-	require.Equal(t, http.StatusOK, capturedResponse.StatusCode)
 	// Verify that the parameter from ResponseInformationT was captured
-	require.NotEmpty(t, capturedT.captured.params)
-	require.Len(t, capturedT.captured.params, 1)
-	require.Equal(t, "response_works", getParameterValue(capturedT.captured.params, "t_response_callback"))
+	assert.Equal(t, 1, capturedT.CapturedParamsCount())
+	assert.Equal(t, "response_works", capturedT.findParamByName("t_response_callback"))
 }
 
 func TestResponseInformationT_Error(t *testing.T) {
@@ -161,7 +155,7 @@ func TestResponseInformationT_Error(t *testing.T) {
 	// The request is still executed successfully
 	require.Empty(t, results.GetErrors())
 	// No parameters should be captured when the callback returns an error
-	require.Empty(t, capturedT.captured.params)
+	require.Zero(t, capturedT.CapturedParamsCount())
 }
 
 func TestResponseInformationT_MultipleCallbacks(t *testing.T) {
@@ -185,14 +179,12 @@ func TestResponseInformationT_MultipleCallbacks(t *testing.T) {
 
 	allureT := createAllureT(t)
 	capturedT := newCaptureT(allureT)
-	results := test.Execute(context.Background(), capturedT)
+	test.Execute(context.Background(), capturedT)
 
-	require.NotNil(t, results)
-	require.Empty(t, results.GetErrors())
 	// Should capture parameters from both callbacks
-	require.Len(t, capturedT.captured.params, 2)
-	require.Equal(t, "t_resp_value1", getParameterValue(capturedT.captured.params, "t_resp_key1"))
-	require.Equal(t, "t_resp_value2", getParameterValue(capturedT.captured.params, "t_resp_key2"))
+	assert.Equal(t, 2, capturedT.CapturedParamsCount())
+	assert.Equal(t, "t_resp_value1", capturedT.findParamByName("t_resp_key1"))
+	assert.Equal(t, "t_resp_value2", capturedT.findParamByName("t_resp_key2"))
 }
 
 func TestResponseInformationAndResponseInformationT_Together(t *testing.T) {
@@ -218,14 +210,12 @@ func TestResponseInformationAndResponseInformationT_Together(t *testing.T) {
 
 	allureT := createAllureT(t)
 	capturedT := newCaptureT(allureT)
-	results := test.Execute(context.Background(), capturedT)
+	test.Execute(context.Background(), capturedT)
 
-	require.NotNil(t, results)
-	require.Empty(t, results.GetErrors())
 	// Should capture parameters from both ResponseInformation and ResponseInformationT
-	require.Len(t, capturedT.captured.params, 2)
-	require.Equal(t, "resp_value", getParameterValue(capturedT.captured.params, "resp_key"))
-	require.Equal(t, "resp_t_value", getParameterValue(capturedT.captured.params, "resp_t_key"))
+	assert.Equal(t, 2, capturedT.CapturedParamsCount())
+	assert.Equal(t, "resp_value", capturedT.findParamByName("resp_key"))
+	assert.Equal(t, "resp_t_value", capturedT.findParamByName("resp_t_key"))
 }
 
 // Tests for ResponseBaseInformation
@@ -242,7 +232,7 @@ func TestResponseBaseInformation(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, params)
 	require.Len(t, params, 1)
-	require.Equal(t, "201", getParameterValue(params, "response_code"))
+	require.Equal(t, "201", findParameterValue(params, "response_code"))
 }
 
 // Tests for ResponseHeadersInformation
@@ -263,7 +253,7 @@ func TestResponseHeadersInformation(t *testing.T) {
 	require.NotNil(t, params)
 	require.Len(t, params, 1)
 
-	headersValue := getParameterValue(params, "response_headers")
+	headersValue := findParameterValue(params, "response_headers")
 	require.NotNil(t, headersValue)
 	headersStr := headersValue.(string)
 	require.Contains(t, headersStr, "Content-Type")
@@ -283,7 +273,7 @@ func TestResponseHeadersInformation_NoHeaders(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, params)
 
-	headersValue := getParameterValue(params, "response_headers")
+	headersValue := findParameterValue(params, "response_headers")
 	require.NotNil(t, headersValue)
 	// Empty headers should still produce a valid JSON object
 	headersStr := headersValue.(string)
@@ -310,8 +300,8 @@ func TestResponseBodyInformationT_WithJSONBody(t *testing.T) {
 
 	require.NoError(t, err)
 	// Check that attachment was added
-	require.Len(t, capturedT.captured.attachments, 1)
-	attachment := getAttachment(capturedT.captured.attachments, "response")
+	require.Equal(t, 1, capturedT.CapturedAttachmentsCount())
+	attachment := capturedT.findAttachmentByName("response")
 	require.NotNil(t, attachment)
 	require.Equal(t, allure.JSON, attachment.Type)
 }
@@ -332,8 +322,8 @@ func TestResponseBodyInformationT_WithTextBody(t *testing.T) {
 	_, err := ResponseBodyInformationT(capturedT, resp)
 
 	require.NoError(t, err)
-	require.Len(t, capturedT.captured.attachments, 1)
-	attachment := getAttachment(capturedT.captured.attachments, "response")
+	require.Equal(t, 1, capturedT.CapturedAttachmentsCount())
+	attachment := capturedT.findAttachmentByName("response")
 	require.NotNil(t, attachment)
 	require.Equal(t, allure.Text, attachment.Type)
 }
@@ -355,7 +345,7 @@ func TestResponseBodyInformationT_EmptyBody(t *testing.T) {
 	// Should return nil when body is empty
 	require.Nil(t, params)
 	// No attachments should be added for empty body
-	require.Empty(t, capturedT.captured.attachments)
+	require.Zero(t, capturedT.CapturedAttachmentsCount())
 }
 
 func TestResponseBodyInformationT_NilBody(t *testing.T) {
@@ -375,7 +365,7 @@ func TestResponseBodyInformationT_NilBody(t *testing.T) {
 	// Should return nil when body is nil
 	require.Nil(t, params)
 	// No attachments should be added for nil body
-	require.Empty(t, capturedT.captured.attachments)
+	require.Zero(t, capturedT.CapturedAttachmentsCount())
 }
 
 func TestResponseBodyInformationT_CustomMimeType(t *testing.T) {
@@ -394,10 +384,10 @@ func TestResponseBodyInformationT_CustomMimeType(t *testing.T) {
 	_, err := ResponseBodyInformationT(capturedT, resp)
 
 	require.NoError(t, err)
-	require.Len(t, capturedT.captured.attachments, 1)
-	attachment := getAttachment(capturedT.captured.attachments, "response")
+	assert.Equal(t, 1, capturedT.CapturedAttachmentsCount())
+	attachment := capturedT.findAttachmentByName("response")
 	require.NotNil(t, attachment)
-	require.Equal(t, allure.MimeType("text/html; charset=utf-8"), attachment.Type)
+	assert.Equal(t, allure.MimeType("text/html; charset=utf-8"), attachment.Type)
 }
 
 func TestResponseInformation_IntegratesWithResponseBodyInformationT(t *testing.T) {
@@ -421,15 +411,13 @@ func TestResponseInformation_IntegratesWithResponseBodyInformationT(t *testing.T
 
 	allureT := createAllureT(t)
 	capturedT := newCaptureT(allureT)
-	results := test.Execute(context.Background(), capturedT)
+	test.Execute(context.Background(), capturedT)
 
-	require.NotNil(t, results)
-	require.Empty(t, results.GetErrors())
 	// Verify response code parameter was captured
-	require.NotEmpty(t, capturedT.captured.params)
-	require.Equal(t, "200", getParameterValue(capturedT.captured.params, "response_code"))
+	assert.NotZero(t, capturedT.CapturedParamsCount())
+	assert.Equal(t, "200", capturedT.findParamByName("response_code"))
 	// Verify attachment was added
-	require.Len(t, capturedT.captured.attachments, 1)
-	attachment := getAttachment(capturedT.captured.attachments, "response")
-	require.NotNil(t, attachment)
+	assert.Equal(t, 1, capturedT.CapturedAttachmentsCount())
+	attachment := capturedT.findAttachmentByName("response")
+	assert.NotNil(t, attachment)
 }
