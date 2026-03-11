@@ -129,14 +129,14 @@ func (a *CuteError) Unwrap() error {
 // Error is a method to get error message
 // It is used for fmt.Errorf and fmt.Println functions
 func (a *CuteError) Error() string {
-	if a.Trace == "" {
-		return a.Message
-	}
-
 	errText := a.Message
 
 	if a.Err != nil {
 		errText = a.Err.Error()
+	}
+
+	if a.Trace == "" {
+		return errText
 	}
 
 	return fmt.Sprintf("%s\nCalled from: %s", errText, a.Trace)

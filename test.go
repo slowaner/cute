@@ -341,7 +341,8 @@ func (it *Test) processTestErrors(t internalT, errs []error) ResultState {
 	)
 
 	for _, err := range errs {
-		message := fmt.Sprintf("error %v", err.Error())
+		messageFormat := "error %v"
+		messageArgs := []any{err.Error()}
 
 		if tErr, ok := err.(cuteErrors.OptionalError); ok {
 			if tErr.IsOptional() {
@@ -374,11 +375,12 @@ func (it *Test) processTestErrors(t internalT, errs []error) ResultState {
 			expected := tErr.GetFields()[cuteErrors.ExpectedField]
 
 			if actual != nil || expected != nil {
-				message = fmt.Sprintf("%s\nActual %v\nExpected %v", message, actual, expected)
+				messageFormat = "%s\nActual %v\nExpected %v"
+				messageArgs = []any{actual, expected}
 			}
 		}
 
-		it.Error(t, message)
+		it.Error(t, messageFormat, messageArgs...)
 
 		countNotOptionalErrors++
 	}

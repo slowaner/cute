@@ -36,7 +36,7 @@ func RequestHTTPHeadersInformation(req *http.Request) ([]*allure.Parameter, erro
 }
 
 func RequestHTTPBodyInformation(req *http.Request) ([]*allure.Parameter, error) {
-	if req.Body != nil {
+	if req.Body == nil {
 		return nil, nil
 	}
 	saveBody, _, err := utils.DrainBody(req.Body)
