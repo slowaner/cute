@@ -3,6 +3,7 @@ package cute
 import (
 	"github.com/ozontech/allure-go/pkg/allure"
 	"github.com/ozontech/cute/internal/utils"
+	"io"
 	"net/http"
 	"strings"
 )
@@ -31,7 +32,12 @@ func ResponseBodyInformationT(t T, resp *http.Response) ([]*allure.Parameter, er
 		return nil, nil
 	}
 
-	saveBody, _, err := utils.DrainBody(resp.Body)
+	var (
+		saveBody io.ReadCloser
+		err      error
+	)
+
+	saveBody, resp.Body, err = utils.DrainBody(resp.Body)
 	// if could not get body from response, no add to allure
 	if err != nil {
 		return nil, err

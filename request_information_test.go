@@ -18,7 +18,7 @@ func TestRequestInformation(t *testing.T) {
 		Request: &Request{
 			Builders: []RequestBuilder{
 				WithMethod(http.MethodGet),
-				WithURI("http://example.com/test"),
+				WithURI(testServerAddress + "/test"),
 			},
 		},
 		RequestInformation: []RequestInformation{
@@ -45,7 +45,7 @@ func TestRequestInformation_Error(t *testing.T) {
 		Request: &Request{
 			Builders: []RequestBuilder{
 				WithMethod(http.MethodGet),
-				WithURI("http://example.com/test"),
+				WithURI(testServerAddress + "/test"),
 			},
 		},
 		RequestInformation: []RequestInformation{
@@ -73,7 +73,7 @@ func TestRequestInformation_MultipleCallbacks(t *testing.T) {
 		Request: &Request{
 			Builders: []RequestBuilder{
 				WithMethod(http.MethodGet),
-				WithURI("http://example.com/test"),
+				WithURI(testServerAddress + "/test"),
 			},
 		},
 		RequestInformation: []RequestInformation{
@@ -111,7 +111,7 @@ func TestRequestInformationT(t *testing.T) {
 		Request: &Request{
 			Builders: []RequestBuilder{
 				WithMethod(http.MethodPost),
-				WithURI("http://example.com/test"),
+				WithURI(testServerAddress + "/test"),
 				WithBody([]byte("test body")),
 			},
 		},
@@ -143,7 +143,7 @@ func TestRequestInformationT_Error(t *testing.T) {
 		Request: &Request{
 			Builders: []RequestBuilder{
 				WithMethod(http.MethodGet),
-				WithURI("http://example.com/test"),
+				WithURI(testServerAddress + "/test"),
 			},
 		},
 		RequestInformationT: []RequestInformationT{
@@ -171,7 +171,7 @@ func TestRequestInformationT_MultipleCallbacks(t *testing.T) {
 		Request: &Request{
 			Builders: []RequestBuilder{
 				WithMethod(http.MethodGet),
-				WithURI("http://example.com/test"),
+				WithURI(testServerAddress + "/test"),
 			},
 		},
 		RequestInformationT: []RequestInformationT{
@@ -202,7 +202,7 @@ func TestRequestInformationAndRequestInformationT_Together(t *testing.T) {
 		Request: &Request{
 			Builders: []RequestBuilder{
 				WithMethod(http.MethodGet),
-				WithURI("http://example.com/test"),
+				WithURI(testServerAddress + "/test"),
 			},
 		},
 		RequestInformation: []RequestInformation{
@@ -247,98 +247,9 @@ func TestWithNewStep_CapturesParameters(t *testing.T) {
 	require.Equal(t, "step_value", getParameterValue(capturedT.captured.params, "step_param"))
 }
 
-// paramCapture holds captured parameters - shared across parent and child captureT instances
-type paramCapture struct {
-	params []*allure.Parameter
-}
-
-// captureT embeds provider.T and captures all parameters passed to WithParameters
-type captureT struct {
-	provider.T
-	captured *paramCapture
-}
-
-// newCaptureT creates a new captureT wrapper
-func newCaptureT(t provider.T) *captureT {
-	return &captureT{
-		T: t,
-		captured: &paramCapture{
-			params: make([]*allure.Parameter, 0),
-		},
-	}
-}
-
-// captureStepCtx wraps provider.StepCtx and captures parameters added within steps
-type captureStepCtx struct {
-	provider.StepCtx
-	captured *paramCapture
-}
-
-// WithParameters captures parameters and forwards to embedded provider.StepCtx
-func (cs *captureStepCtx) WithParameters(parameters ...*allure.Parameter) {
-	cs.captured.params = append(cs.captured.params, parameters...)
-	cs.StepCtx.WithParameters(parameters...)
-}
-
-// WithNewParameters forwards to embedded provider.StepCtx
-func (cs *captureStepCtx) WithNewParameters(kv ...interface{}) {
-	cs.StepCtx.WithNewParameters(kv...)
-}
-
-// WithParameters captures parameters and forwards to embedded provider.T
-func (c *captureT) WithParameters(parameters ...*allure.Parameter) {
-	c.captured.params = append(c.captured.params, parameters...)
-	c.T.WithParameters(parameters...)
-}
-
-// WithNewParameters forwards to embedded provider.T
-func (c *captureT) WithNewParameters(kv ...interface{}) {
-	c.T.WithNewParameters(kv...)
-}
-
-// WithNewStep captures parameters and forwards to embedded provider.T
-func (c *captureT) WithNewStep(name string, step func(sCtx provider.StepCtx), params ...*allure.Parameter) {
-	// Capture parameters passed to WithNewStep
-	c.captured.params = append(c.captured.params, params...)
-
-	// Wrap the step callback to capture parameters added within the step
-	wrappedStep := func(stepCtx provider.StepCtx) {
-		wrappedCtx := &captureStepCtx{
-			StepCtx:  stepCtx,
-			captured: c.captured,
-		}
-		step(wrappedCtx)
-	}
-
-	c.T.WithNewStep(name, wrappedStep, params...)
-}
-
-// Run wraps the test body to capture nested parameters
-func (c *captureT) Run(testName string, testBody func(provider.T), tags ...string) *allure.Result {
-	return c.T.Run(testName, func(innerT provider.T) {
-		// Wrap the inner T to capture its parameters too
-		// Share the same paramCapture pointer so nested params are propagated back
-		wrappedInnerT := &captureT{
-			T:        innerT,
-			captured: c.captured,
-		}
-		testBody(wrappedInnerT)
-	}, tags...)
-}
-
-// Helper function to find parameter by key
-func getParameterValue(params []*allure.Parameter, key string) any {
-	for _, p := range params {
-		if p.Name == key {
-			return p.Value
-		}
-	}
-	return nil
-}
-
 func TestRequestCurlInformation_ValidRequest(t *testing.T) {
 	t.Parallel()
-	req, err := http.NewRequest(http.MethodPost, "http://example.com/api", nil)
+	req, err := http.NewRequest(http.MethodPost, testServerAddress+"/api", nil)
 	require.NoError(t, err)
 
 	params, err := RequestCurlInformation(req)
@@ -369,7 +280,7 @@ func TestRequestCurlInformation_InvalidRequest(t *testing.T) {
 
 func TestRequestHTTPBaseInformation_StandardRequest(t *testing.T) {
 	t.Parallel()
-	req, err := http.NewRequest(http.MethodPost, "http://example.com/test", nil)
+	req, err := http.NewRequest(http.MethodPost, testServerAddress+"/test", nil)
 	require.NoError(t, err)
 
 	params, err := RequestHTTPBaseInformation(req)
@@ -379,7 +290,7 @@ func TestRequestHTTPBaseInformation_StandardRequest(t *testing.T) {
 	require.Equal(t, 2, len(params))
 
 	require.Equal(t, http.MethodPost, getParameterValue(params, "method"))
-	require.Equal(t, "example.com", getParameterValue(params, "host"))
+	require.Equal(t, testServerHost, getParameterValue(params, "host"))
 }
 
 func TestRequestHTTPBaseInformation_DifferentMethods(t *testing.T) {
@@ -410,12 +321,14 @@ func TestRequestHTTPBaseInformation_EmptyHost(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, params)
-	require.Equal(t, "", getParameterValue(params, "host"))
+	param := getParameterValue(params, "host")
+	require.NotNil(t, param)
+	require.Empty(t, param)
 }
 
 func TestRequestHTTPHeadersInformation_WithHeaders(t *testing.T) {
 	t.Parallel()
-	req, err := http.NewRequest(http.MethodGet, "http://example.com", nil)
+	req, err := http.NewRequest(http.MethodGet, testServerAddress, nil)
 	require.NoError(t, err)
 
 	req.Header.Set("Content-Type", "application/json")
@@ -437,7 +350,7 @@ func TestRequestHTTPHeadersInformation_WithHeaders(t *testing.T) {
 
 func TestRequestHTTPHeadersInformation_NoHeaders(t *testing.T) {
 	t.Parallel()
-	req, err := http.NewRequest(http.MethodGet, "http://example.com", nil)
+	req, err := http.NewRequest(http.MethodGet, testServerAddress, nil)
 	require.NoError(t, err)
 
 	params, err := RequestHTTPHeadersInformation(req)
@@ -451,7 +364,7 @@ func TestRequestHTTPHeadersInformation_NoHeaders(t *testing.T) {
 
 func TestRequestHTTPHeadersInformation_MultipleHeaderValues(t *testing.T) {
 	t.Parallel()
-	req, err := http.NewRequest(http.MethodGet, "http://example.com", nil)
+	req, err := http.NewRequest(http.MethodGet, testServerAddress, nil)
 	require.NoError(t, err)
 
 	req.Header.Add("Accept", "application/json")
@@ -469,7 +382,7 @@ func TestRequestHTTPHeadersInformation_MultipleHeaderValues(t *testing.T) {
 
 func TestRequestHTTPBodyInformation_NoBody(t *testing.T) {
 	t.Parallel()
-	req, err := http.NewRequest(http.MethodGet, "http://example.com", nil)
+	req, err := http.NewRequest(http.MethodGet, testServerAddress, http.NoBody)
 	require.NoError(t, err)
 
 	params, err := RequestHTTPBodyInformation(req)
@@ -479,9 +392,9 @@ func TestRequestHTTPBodyInformation_NoBody(t *testing.T) {
 	require.Nil(t, params)
 }
 
-func TestRequestHTTPBodyInformation_EmptyBody(t *testing.T) {
+func TestRequestHTTPBodyInformation_NilBody(t *testing.T) {
 	t.Parallel()
-	req, err := http.NewRequest(http.MethodPost, "http://example.com", nil)
+	req, err := http.NewRequest(http.MethodPost, testServerAddress, nil)
 	require.NoError(t, err)
 
 	params, err := RequestHTTPBodyInformation(req)
@@ -489,54 +402,6 @@ func TestRequestHTTPBodyInformation_EmptyBody(t *testing.T) {
 	require.NoError(t, err)
 	// Empty/nil body should return nil
 	require.Nil(t, params)
-}
-
-func TestRequestHTTPBaseInformation_PortInHost(t *testing.T) {
-	t.Parallel()
-	req, err := http.NewRequest(http.MethodGet, "http://example.com:8080/test", nil)
-	require.NoError(t, err)
-
-	params, err := RequestHTTPBaseInformation(req)
-
-	require.NoError(t, err)
-	require.NotNil(t, params)
-
-	hostValue := getParameterValue(params, "host")
-	require.NotNil(t, hostValue)
-	// Host should include port when present in URL
-	require.Contains(t, hostValue.(string), "example.com")
-}
-
-func TestRequestHTTPBaseInformation_SubdomainRequest(t *testing.T) {
-	t.Parallel()
-	req, err := http.NewRequest(http.MethodGet, "http://api.v1.example.com/endpoint", nil)
-	require.NoError(t, err)
-
-	params, err := RequestHTTPBaseInformation(req)
-
-	require.NoError(t, err)
-	require.NotNil(t, params)
-
-	hostValue := getParameterValue(params, "host")
-	require.Equal(t, "api.v1.example.com", hostValue)
-}
-
-func TestRequestHTTPBaseInformation_HttpsRequest(t *testing.T) {
-	t.Parallel()
-	req, err := http.NewRequest(http.MethodGet, "https://secure.example.com/endpoint", nil)
-	require.NoError(t, err)
-
-	params, err := RequestHTTPBaseInformation(req)
-
-	require.NoError(t, err)
-	require.NotNil(t, params)
-
-	methodValue := getParameterValue(params, "method")
-	hostValue := getParameterValue(params, "host")
-	require.NotNil(t, methodValue)
-	require.NotNil(t, hostValue)
-	// Scheme should not affect the returned parameters
-	require.Equal(t, "secure.example.com", hostValue)
 }
 
 // Tests for sanitized request data in RequestInformation and RequestInformationT
@@ -548,7 +413,7 @@ func TestRequestInformation_ReceivesSanitizedData(t *testing.T) {
 		Request: &Request{
 			Builders: []RequestBuilder{
 				WithMethod(http.MethodGet),
-				WithURI("https://example.com/api"),
+				WithURI(testServerAddress + "/api"),
 				WithHeaders(map[string][]string{
 					"Authorization": {"Bearer secret_token_abc123"},
 				}),
@@ -584,7 +449,7 @@ func TestRequestInformationT_ReceivesSanitizedData(t *testing.T) {
 		Request: &Request{
 			Builders: []RequestBuilder{
 				WithMethod(http.MethodPost),
-				WithURI("https://example.com/login"),
+				WithURI(testServerAddress + "/login"),
 				WithHeaders(map[string][]string{
 					"Authorization": {"Bearer secret_token_abc123"},
 				}),

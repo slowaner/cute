@@ -3,6 +3,7 @@ package cute
 import (
 	"github.com/ozontech/allure-go/pkg/allure"
 	"github.com/ozontech/cute/internal/utils"
+	"io"
 	"moul.io/http2curl/v2"
 	"net/http"
 )
@@ -36,10 +37,14 @@ func RequestHTTPHeadersInformation(req *http.Request) ([]*allure.Parameter, erro
 }
 
 func RequestHTTPBodyInformation(req *http.Request) ([]*allure.Parameter, error) {
-	if req.Body == nil {
+	if req.Body == nil || req.Body == http.NoBody {
 		return nil, nil
 	}
-	saveBody, _, err := utils.DrainBody(req.Body)
+	var (
+		saveBody io.ReadCloser
+		err      error
+	)
+	saveBody, req.Body, err = utils.DrainBody(req.Body)
 	if err != nil {
 		return nil, err
 	}

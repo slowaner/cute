@@ -15,7 +15,38 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/ozontech/cute/internal/utils"
+	"log"
+	"os"
 )
+
+var (
+	testServerAddress  = ""
+	testServerHost     = ""
+	testServerHostName = ""
+	testServerPort     = ""
+)
+
+func TestMain(m *testing.M) {
+	r := http.NewServeMux()
+	r.HandleFunc("/with_body", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("OK"))
+	})
+	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+	testServer := httptest.NewServer(r)
+	defer testServer.Close()
+	testServerAddress = testServer.URL
+	u, err := url.Parse(testServerAddress)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	testServerHost = u.Host
+	testServerHostName = u.Hostname()
+	testServerPort = u.Port()
+	os.Exit(m.Run())
+}
 
 func TestCreateRequest(t *testing.T) {
 	req, err := http.NewRequest(http.MethodGet, "http://go.com", nil)
