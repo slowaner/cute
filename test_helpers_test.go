@@ -2,9 +2,10 @@ package cute
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/ozontech/allure-go/pkg/allure"
 	"github.com/ozontech/allure-go/pkg/framework/provider"
-	"strings"
 )
 
 type paramCaptureGetter interface {
@@ -364,6 +365,7 @@ func (c *captureT) GetCapturedAllureInfo(testName string) AllureInformation {
 	if capture, ok := c.children[testName]; ok {
 		return capture.allureInfo
 	}
+
 	return AllureInformation{}
 }
 
@@ -372,6 +374,7 @@ func (c *captureT) GetCapturedAllureLabels(testName string) AllureLabels {
 	if capture, ok := c.children[testName]; ok {
 		return capture.allureLabels
 	}
+
 	return AllureLabels{}
 }
 
@@ -380,6 +383,7 @@ func (c *captureT) GetCapturedAllureLinks(testName string) AllureLinks {
 	if capture, ok := c.children[testName]; ok {
 		return capture.allureLinks
 	}
+
 	return AllureLinks{}
 }
 

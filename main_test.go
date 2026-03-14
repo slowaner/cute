@@ -24,33 +24,54 @@ var (
 
 func TestMain(m *testing.M) {
 	r := http.NewServeMux()
-	r.HandleFunc("/with_body", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/with_body", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("OK"))
 	})
-	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
+
 	testServer := httptest.NewServer(r)
 	defer testServer.Close()
+
 	testServerAddress = testServer.URL
+
 	u, err := url.Parse(testServerAddress)
 	if err != nil {
 		log.Fatalln(err)
 	}
+
 	testServerHost = u.Host
 	testServerHostName = u.Hostname()
 	testServerPort = u.Port()
 
 	err = os.Setenv("ALLURE_ISSUE_PATTERN", testServerAddress+"/issue/%s")
+	if err != nil {
+		log.Fatalln(err)
+		return
+	}
+
 	err = os.Setenv("ALLURE_TESTCASE_PATTERN", testServerAddress+"/test_case/%s")
+	if err != nil {
+		log.Fatalln(err)
+		return
+	}
+
 	err = os.Setenv("ALLURE_LINK_TMS_PATTERN", testServerAddress+"/tms/%s")
+	if err != nil {
+		log.Fatalln(err)
+		return
+	}
+
 	outPath := getResultPath()
+
 	err = os.RemoveAll(outPath)
 	if err != nil {
 		log.Fatalln(err)
 		return
 	}
+
 	os.Exit(m.Run())
 }
 

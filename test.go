@@ -178,6 +178,7 @@ func (it *Test) Execute(ctx context.Context, t tProvider) ResultsHTTPBuilder {
 		if it.Parallel {
 			inT.Parallel()
 		}
+
 		it.setAllureInformation(inT)
 		res = it.executeInsideAllure(ctx, inT)
 	})

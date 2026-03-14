@@ -32,12 +32,17 @@ type cute struct {
 	respInfoT []ResponseInformationT
 }
 
+// AllureInformation stores test description metadata for test reports
+// Fields are applied during test execution and override builder-level info in table tests
 type AllureInformation struct {
 	Title       string
 	Description string
 	Stage       string
 }
 
+// AllureLabels stores label metadata for test reports
+// Scalar fields (Epic, Feature, Story, etc.) override builder-level values in table tests
+// Slice fields (Tags, Labels) are combined with builder-level values for table tests
 type AllureLabels struct {
 	ID          string
 	Feature     string
@@ -57,6 +62,8 @@ type AllureLabels struct {
 	Layer       string
 }
 
+// AllureLinks stores link metadata for test reports
+// Fields are applied during test execution and combined with builder-level links for table tests
 type AllureLinks struct {
 	Issue    string
 	TestCase string

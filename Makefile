@@ -1,38 +1,18 @@
+ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
+
+LINT_IMAGE ?= golangci/golangci-lint:v2.6.2-alpine
+
+ifeq ($(shell uname),Darwin)
+  GO_BUILD_CACHE ?= $(HOME)/Library/Caches/go-build
+else
+  GO_BUILD_CACHE ?= $(HOME)/.cache/go-build
+endif
+GO_MOD_CACHE ?= $(HOME)/go/pkg/mod
+GOLANGCI_LINT_CACHE ?= $(HOME)/.cache/golangci-lint
+
 export GO111MODULE=on
 export GOSUMDB=off
 LOCAL_BIN:=$(CURDIR)/bin
-
-##################### GOLANG-CI RELATED CHECKS #####################
-# Check global GOLANGCI-LINT
-GOLANGCI_BIN:=$(LOCAL_BIN)/golangci-lint
-GOLANGCI_TAG:=1.54.2
-
-# Check local bin version
-ifneq ($(wildcard $(GOLANGCI_BIN)),)
-GOLANGCI_BIN_VERSION:=$(shell $(GOLANGCI_BIN) --version)
-ifneq ($(GOLANGCI_BIN_VERSION),)
-GOLANGCI_BIN_VERSION_SHORT:=$(shell echo "$(GOLANGCI_BIN_VERSION)" | sed -E 's/.* version (.*) built from .* on .*/\1/g')
-else
-GOLANGCI_BIN_VERSION_SHORT:=0
-endif
-ifneq "$(GOLANGCI_TAG)" "$(word 1, $(sort $(GOLANGCI_TAG) $(GOLANGCI_BIN_VERSION_SHORT)))"
-GOLANGCI_BIN:=
-endif
-endif
-
-# Check global bin version
-ifneq (, $(shell which golangci-lint))
-GOLANGCI_VERSION:=$(shell golangci-lint --version 2> /dev/null )
-ifneq ($(GOLANGCI_VERSION),)
-GOLANGCI_VERSION_SHORT:=$(shell echo "$(GOLANGCI_VERSION)"|sed -E 's/.* version (.*) built from .* on .*/\1/g')
-else
-GOLANGCI_VERSION_SHORT:=0
-endif
-ifeq "$(GOLANGCI_TAG)" "$(word 1, $(sort $(GOLANGCI_TAG) $(GOLANGCI_VERSION_SHORT)))"
-GOLANGCI_BIN:=$(shell which golangci-lint)
-endif
-endif
-##################### GOLANG-CI RELATED CHECKS #####################
 
 .PHONY: install
 install:
@@ -40,19 +20,17 @@ install:
 
 # run full lint like in pipeline
 .PHONY: lint
-lint: install-lint
-	$(GOLANGCI_BIN) run --config=.golangci.yaml ./... --new-from-rev=origin/master --build-tags=examples,allure_go,provider
-
-
-.PHONY: install-lint
-install-lint:
-ifeq ($(wildcard $(GOLANGCI_BIN)),)
-	$(info #Downloading golangci-lint v$(GOLANGCI_TAG))
-	tmp=$$(mktemp -d) && cd $$tmp && pwd && go mod init temp && go get -d github.com/golangci/golangci-lint/cmd/golangci-lint@v$(GOLANGCI_TAG) && \
-		go build -ldflags "-X 'main.version=$(GOLANGCI_TAG)' -X 'main.commit=test' -X 'main.date=test'" -o $(LOCAL_BIN)/golangci-lint github.com/golangci/golangci-lint/cmd/golangci-lint && \
-		rm -rf $$tmp
-GOLANGCI_BIN:=$(LOCAL_BIN)/golangci-lint
-endif
+lint: ### Run linter using Docker.
+	@echo app version $(BUILD_VERSION)
+	@echo run $(LINT_IMAGE)
+	@docker run -it --rm \
+		--platform linux/amd64 \
+		-v $(GO_BUILD_CACHE):/.cache/go-build -e GOCACHE=/.cache/go-build \
+		-v $(GO_MOD_CACHE):/.cache/mod -e GOMODCACHE=/.cache/mod \
+		-v $(GOLANGCI_LINT_CACHE):/.cache/golangci-lint -e GOLANGCI_LINT_CACHE=/.cache/golangci-lint \
+		-v $(ROOT_DIR):/app \
+		-w /app \
+		$(LINT_IMAGE) golangci-lint run -v --new-from-rev=origin/master --build-tags=examples,allure_go,provider
 
 .PHONY: cover
 cover:
