@@ -44,6 +44,10 @@ type Test struct {
 	httpClient    *http.Client
 	jsonMarshaler JSONMarshaler
 
+	AllureInfo   AllureInformation
+	AllureLinks  AllureLinks
+	AllureLabels AllureLabels
+
 	Name     string
 	Parallel bool
 	Retry    *Retry

@@ -101,9 +101,9 @@ func (m *HTTPTestMaker) NewTestBuilder() AllureBuilder {
 		baseProps:    m,
 		countTests:   0,
 		tests:        tests,
-		allureInfo:   new(allureInformation),
-		allureLinks:  new(allureLinks),
-		allureLabels: new(allureLabels),
+		allureInfo:   new(AllureInformation),
+		allureLinks:  new(AllureLinks),
+		allureLabels: new(AllureLabels),
 		parallel:     false,
 	}
 }
