@@ -44,6 +44,13 @@ type Test struct {
 	httpClient    *http.Client
 	jsonMarshaler JSONMarshaler
 
+	// Not applied if test is run as step
+	AllureInfo AllureInformation
+	// Not applied if test is run as step
+	AllureLinks AllureLinks
+	// Not applied if test is run as step
+	AllureLabels AllureLabels
+
 	Name     string
 	Parallel bool
 	Retry    *Retry
@@ -171,6 +178,8 @@ func (it *Test) Execute(ctx context.Context, t tProvider) ResultsHTTPBuilder {
 		if it.Parallel {
 			inT.Parallel()
 		}
+
+		it.setAllureInformation(inT)
 		res = it.executeInsideAllure(ctx, inT)
 	})
 

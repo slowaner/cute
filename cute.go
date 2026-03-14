@@ -16,9 +16,9 @@ type cute struct {
 
 	parallel bool
 
-	allureInfo   *allureInformation
-	allureLinks  *allureLinks
-	allureLabels *allureLabels
+	allureInfo   *AllureInformation
+	allureLinks  *AllureLinks
+	allureLabels *AllureLabels
 
 	countTests int // Общее количество тестов.
 
@@ -32,37 +32,44 @@ type cute struct {
 	respInfoT []ResponseInformationT
 }
 
-type allureInformation struct {
-	title       string
-	description string
-	stage       string
+// AllureInformation stores test description metadata for test reports
+// Fields are applied during test execution and override builder-level info in table tests
+type AllureInformation struct {
+	Title       string
+	Description string
+	Stage       string
 }
 
-type allureLabels struct {
-	id          string
-	feature     string
-	epic        string
-	tag         string
-	tags        []string
-	suiteLabel  string
-	subSuite    string
-	parentSuite string
-	story       string
-	severity    allure.SeverityType
-	owner       string
-	lead        string
-	label       *allure.Label
-	labels      []*allure.Label
-	allureID    string
-	layer       string
+// AllureLabels stores label metadata for test reports
+// Scalar fields (Epic, Feature, Story, etc.) override builder-level values in table tests
+// Slice fields (Tags, Labels) are combined with builder-level values for table tests
+type AllureLabels struct {
+	ID          string
+	Feature     string
+	Epic        string
+	Tag         string
+	Tags        []string
+	SuiteLabel  string
+	SubSuite    string
+	ParentSuite string
+	Story       string
+	Severity    allure.SeverityType
+	Owner       string
+	Lead        string
+	Label       *allure.Label
+	Labels      []*allure.Label
+	AllureID    string
+	Layer       string
 }
 
-type allureLinks struct {
-	issue    string
-	testCase string
-	link     *allure.Link
-	tmsLink  string
-	tmsLinks []string
+// AllureLinks stores link metadata for test reports
+// Fields are applied during test execution and combined with builder-level links for table tests
+type AllureLinks struct {
+	Issue    string
+	TestCase string
+	Link     *allure.Link
+	TmsLink  string
+	TmsLinks []string
 }
 
 func (qt *cute) ExecuteTest(ctx context.Context, t tProvider) []ResultsHTTPBuilder {
@@ -133,8 +140,10 @@ func (qt *cute) executeTests(ctx context.Context, allureProvider allureProvider)
 			tableTestName := currentTest.Name
 
 			allureProvider.Run(tableTestName, func(inT provider.T) {
-				// Set current test name
+				// Set current test info
+				qt.setAllureInformation(inT)
 				inT.Title(tableTestName)
+				currentTest.setAllureInformation(inT)
 
 				res = append(res, qt.executeInsideAllure(ctx, inT, currentTest))
 			})
