@@ -24,6 +24,12 @@ type cute struct {
 
 	isTableTest bool
 	tests       []*Test
+
+	// stored information callbacks for next added tests
+	reqInfo   []RequestInformation
+	reqInfoT  []RequestInformationT
+	respInfo  []ResponseInformation
+	respInfoT []ResponseInformationT
 }
 
 type allureInformation struct {
@@ -71,19 +77,17 @@ func (qt *cute) ExecuteTest(ctx context.Context, t tProvider) []ResultsHTTPBuild
 		return qt.executeTestsInsideStep(ctx, stepCtx)
 	}
 
-	tOriginal, ok := t.(*testing.T)
-	if ok {
-		newT := createAllureT(tOriginal)
+	switch v := t.(type) {
+	case provider.T:
+		internalT = v
+	case *testing.T:
+		newT := createAllureT(v)
 		if !qt.isTableTest {
 			defer newT.FinishTest() //nolint
 		}
-
 		internalT = newT
-	}
-
-	allureT, ok := t.(provider.T)
-	if ok {
-		internalT = allureT
+	default:
+		panic("could not start test without testing.T or provider.T")
 	}
 
 	if qt.parallel {

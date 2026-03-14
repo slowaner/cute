@@ -1,6 +1,9 @@
 package cute
 
-import "net/http"
+import (
+	"net/http"
+	"slices"
+)
 
 func (qt *cute) CreateTableTest() MiddlewareTable {
 	qt.isTableTest = true
@@ -10,18 +13,16 @@ func (qt *cute) CreateTableTest() MiddlewareTable {
 
 func (qt *cute) PutNewTest(name string, r *http.Request, expect *Expect) TableTest {
 	// Validate, that first step is empty
-	if qt.countTests == 0 {
-		if qt.tests[0].Request.Base == nil &&
-			len(qt.tests[0].Request.Builders) == 0 {
-			qt.tests[0].Expect = expect
-			qt.tests[0].Name = name
-			qt.tests[0].Request.Base = r
+	if qt.tests[qt.countTests].Request.Base == nil &&
+		len(qt.tests[qt.countTests].Request.Builders) == 0 {
+		qt.tests[qt.countTests].Expect = expect
+		qt.tests[qt.countTests].Name = name
+		qt.tests[qt.countTests].Request.Base = r
 
-			return qt
-		}
+		return qt
 	}
 
-	newTest := createDefaultTest(qt.baseProps)
+	newTest := createDefaultTest(qt.baseProps, qt.reqInfo, qt.reqInfoT, qt.respInfo, qt.respInfoT)
 	newTest.Expect = expect
 	newTest.Name = name
 	newTest.Request.Base = r
@@ -34,16 +35,14 @@ func (qt *cute) PutNewTest(name string, r *http.Request, expect *Expect) TableTe
 func (qt *cute) PutTests(tests ...*Test) TableTest {
 	for _, test := range tests {
 		// Fill common fields
-		qt.fillBaseProps(test)
+		qt.fillProps(test)
 
 		// Validate, that first step is empty
-		if qt.countTests == 0 {
-			if qt.tests[0].Request.Base == nil &&
-				len(qt.tests[0].Request.Builders) == 0 {
-				qt.tests[0] = test
+		if qt.tests[qt.countTests].Request.Base == nil &&
+			len(qt.tests[qt.countTests].Request.Builders) == 0 {
+			qt.tests[qt.countTests] = test
 
-				continue
-			}
+			continue
 		}
 
 		qt.tests = append(qt.tests, test)
@@ -53,33 +52,83 @@ func (qt *cute) PutTests(tests ...*Test) TableTest {
 	return qt
 }
 
-func (qt *cute) fillBaseProps(t *Test) {
-	if qt.baseProps == nil {
-		return
+func (qt *cute) fillProps(t *Test) {
+	var (
+		baseRequestInformation   []RequestInformation
+		baseRequestInformationT  []RequestInformationT
+		baseResponseInformation  []ResponseInformation
+		baseResponseInformationT []ResponseInformationT
+	)
+	if qt.baseProps != nil {
+		if qt.baseProps.httpClient != nil {
+			t.httpClient = qt.baseProps.httpClient
+		}
+
+		if qt.baseProps.jsonMarshaler != nil {
+			t.jsonMarshaler = qt.baseProps.jsonMarshaler
+		}
+
+		if t.Middleware == nil {
+			t.Middleware = createMiddlewareFromTemplate(qt.baseProps.middleware)
+		} else {
+			t.Middleware.After = append(t.Middleware.After, qt.baseProps.middleware.After...)
+			t.Middleware.AfterT = append(t.Middleware.AfterT, qt.baseProps.middleware.AfterT...)
+			t.Middleware.Before = append(t.Middleware.Before, qt.baseProps.middleware.Before...)
+			t.Middleware.BeforeT = append(t.Middleware.BeforeT, qt.baseProps.middleware.BeforeT...)
+		}
+		if len(qt.baseProps.requestInformation) > 0 {
+			baseRequestInformation = qt.baseProps.requestInformation
+		}
+		if len(qt.baseProps.requestInformationT) > 0 {
+			baseRequestInformationT = qt.baseProps.requestInformationT
+		}
+		if len(qt.baseProps.responseInformation) > 0 {
+			baseResponseInformation = qt.baseProps.responseInformation
+		}
+		if len(qt.baseProps.responseInformationT) > 0 {
+			baseResponseInformationT = qt.baseProps.responseInformationT
+		}
 	}
 
-	if qt.baseProps.httpClient != nil {
-		t.httpClient = qt.baseProps.httpClient
-	}
-
-	if qt.baseProps.jsonMarshaler != nil {
-		t.jsonMarshaler = qt.baseProps.jsonMarshaler
-	}
-
-	if t.Middleware == nil {
-		t.Middleware = createMiddlewareFromTemplate(qt.baseProps.middleware)
-	} else {
-		t.Middleware.After = append(t.Middleware.After, qt.baseProps.middleware.After...)
-		t.Middleware.AfterT = append(t.Middleware.AfterT, qt.baseProps.middleware.AfterT...)
-		t.Middleware.Before = append(t.Middleware.Before, qt.baseProps.middleware.Before...)
-		t.Middleware.BeforeT = append(t.Middleware.BeforeT, qt.baseProps.middleware.BeforeT...)
-	}
+	// Merge information handlers (APPEND pattern - combine builder + test handlers)
+	t.RequestInformation = slices.Concat(baseRequestInformation, qt.reqInfo, t.RequestInformation)
+	t.RequestInformationT = slices.Concat(baseRequestInformationT, qt.reqInfoT, t.RequestInformationT)
+	t.ResponseInformation = slices.Concat(baseResponseInformation, qt.respInfo, t.ResponseInformation)
+	t.ResponseInformationT = slices.Concat(baseResponseInformationT, qt.respInfoT, t.ResponseInformationT)
 }
 
 func (qt *cute) NextTest() NextTestBuilder {
 	qt.countTests++ // async?
 
-	qt.tests = append(qt.tests, createDefaultTest(qt.baseProps))
+	qt.reqInfo = nil
+	qt.reqInfoT = nil
+	qt.respInfo = nil
+	qt.respInfoT = nil
+	qt.tests = append(qt.tests, createDefaultTest(qt.baseProps, qt.reqInfo, qt.reqInfoT, qt.respInfo, qt.respInfoT))
+
+	return qt
+}
+
+func (qt *cute) RequestInformationTable(handlers ...RequestInformation) MiddlewareTable {
+	qt.reqInfo = append(qt.reqInfo, handlers...)
+
+	return qt
+}
+
+func (qt *cute) RequestInformationTTable(handlers ...RequestInformationT) MiddlewareTable {
+	qt.reqInfoT = append(qt.reqInfoT, handlers...)
+
+	return qt
+}
+
+func (qt *cute) ResponseInformationTable(handlers ...ResponseInformation) MiddlewareTable {
+	qt.respInfo = append(qt.respInfo, handlers...)
+
+	return qt
+}
+
+func (qt *cute) ResponseInformationTTable(handlers ...ResponseInformationT) MiddlewareTable {
+	qt.respInfoT = append(qt.respInfoT, handlers...)
 
 	return qt
 }

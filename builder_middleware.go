@@ -63,3 +63,27 @@ func (qt *cute) AfterTestExecuteT(fs ...AfterExecuteT) NextTestBuilder {
 
 	return qt
 }
+
+func (qt *cute) RequestInformation(handlers ...RequestInformation) MiddlewareRequest {
+	qt.tests[qt.countTests].RequestInformation = append(qt.tests[qt.countTests].RequestInformation, handlers...)
+
+	return qt
+}
+
+func (qt *cute) RequestInformationT(handlers ...RequestInformationT) MiddlewareRequest {
+	qt.tests[qt.countTests].RequestInformationT = append(qt.tests[qt.countTests].RequestInformationT, handlers...)
+
+	return qt
+}
+
+func (qt *cute) ResponseInformation(handlers ...ResponseInformation) MiddlewareRequest {
+	qt.tests[qt.countTests].ResponseInformation = append(qt.tests[qt.countTests].ResponseInformation, handlers...)
+
+	return qt
+}
+
+func (qt *cute) ResponseInformationT(handlers ...ResponseInformationT) MiddlewareRequest {
+	qt.tests[qt.countTests].ResponseInformationT = append(qt.tests[qt.countTests].ResponseInformationT, handlers...)
+
+	return qt
+}

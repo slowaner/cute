@@ -13,6 +13,11 @@ type options struct {
 	jsonMarshaler JSONMarshaler
 
 	middleware *Middleware
+
+	requestInformation   []RequestInformation
+	requestInformationT  []RequestInformationT
+	responseInformation  []ResponseInformation
+	responseInformationT []ResponseInformationT
 }
 
 // Option ...
@@ -71,5 +76,33 @@ func WithMiddlewareBefore(before ...BeforeExecute) Option {
 func WithMiddlewareBeforeT(beforeT ...BeforeExecuteT) Option {
 	return func(o *options) {
 		o.middleware.BeforeT = append(o.middleware.BeforeT, beforeT...)
+	}
+}
+
+// WithRequestInformation sets request information handlers at HTTPTestMaker level
+func WithRequestInformation(handlers ...RequestInformation) Option {
+	return func(o *options) {
+		o.requestInformation = append(o.requestInformation, handlers...)
+	}
+}
+
+// WithRequestInformationT sets request information handlers with T context
+func WithRequestInformationT(handlers ...RequestInformationT) Option {
+	return func(o *options) {
+		o.requestInformationT = append(o.requestInformationT, handlers...)
+	}
+}
+
+// WithResponseInformation sets response information handlers at HTTPTestMaker level
+func WithResponseInformation(handlers ...ResponseInformation) Option {
+	return func(o *options) {
+		o.responseInformation = append(o.responseInformation, handlers...)
+	}
+}
+
+// WithResponseInformationT sets response information handlers with T context
+func WithResponseInformationT(handlers ...ResponseInformationT) Option {
+	return func(o *options) {
+		o.responseInformationT = append(o.responseInformationT, handlers...)
 	}
 }

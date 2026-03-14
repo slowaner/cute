@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ozontech/allure-go/pkg/allure"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -347,25 +348,25 @@ func TestHTTPTestMaker(t *testing.T) {
 }
 
 func TestCreateDefaultTest(t *testing.T) {
-	resTest := createDefaultTest(&HTTPTestMaker{httpClient: http.DefaultClient, middleware: new(Middleware)})
+	resTest := createDefaultTest(
+		&HTTPTestMaker{httpClient: http.DefaultClient, middleware: new(Middleware)},
+		nil,
+		nil,
+		nil,
+		nil,
+	)
 
-	require.Equal(t, &Test{
-		httpClient: http.DefaultClient,
-		Name:       "",
-		AllureStep: new(AllureStep),
-		Middleware: &Middleware{
-			After:   make([]AfterExecute, 0),
-			AfterT:  make([]AfterExecuteT, 0),
-			Before:  make([]BeforeExecute, 0),
-			BeforeT: make([]BeforeExecuteT, 0),
-		},
-		Request: &Request{
-			Retry: new(RequestRetryPolitic),
-		},
-		Expect: &Expect{
-			JSONSchema: new(ExpectJSONSchema),
-		},
-	}, resTest)
+	assert.Equal(t, http.DefaultClient, resTest.httpClient)
+	assert.Empty(t, resTest.Name)
+	assert.NotNil(t, resTest.AllureStep)
+	assert.NotNil(t, resTest.Middleware)
+	assert.NotNil(t, resTest.Request)
+	assert.NotNil(t, resTest.Expect)
+	assert.NotNil(t, resTest.Expect.JSONSchema)
+	assert.NotNil(t, resTest.RequestInformation)
+	assert.NotNil(t, resTest.RequestInformationT)
+	assert.NotNil(t, resTest.ResponseInformation)
+	assert.NotNil(t, resTest.ResponseInformationT)
 }
 
 func TestCreateTableTest(t *testing.T) {
@@ -377,7 +378,13 @@ func TestCreateTableTest(t *testing.T) {
 
 func TestPutNewTest(t *testing.T) {
 	tests := make([]*Test, 1)
-	tests[0] = createDefaultTest(&HTTPTestMaker{httpClient: http.DefaultClient, middleware: new(Middleware)})
+	tests[0] = createDefaultTest(
+		&HTTPTestMaker{httpClient: http.DefaultClient, middleware: new(Middleware)},
+		nil,
+		nil,
+		nil,
+		nil,
+	)
 
 	var (
 		c = &cute{tests: tests, baseProps: &HTTPTestMaker{

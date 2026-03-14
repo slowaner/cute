@@ -2,6 +2,7 @@ package cute
 
 import (
 	"net/http"
+	"slices"
 	"time"
 )
 
@@ -16,10 +17,17 @@ type HTTPTestMaker struct {
 	httpClient    *http.Client
 	middleware    *Middleware
 	jsonMarshaler JSONMarshaler
+
+	requestInformation   []RequestInformation
+	requestInformationT  []RequestInformationT
+	responseInformation  []ResponseInformation
+	responseInformationT []ResponseInformationT
 }
 
 // NewHTTPTestMaker is function for set options for all cute.
-// For example, you can set timeout for all requests  or set custom http client
+// For example, you can set timeout for all requests or set custom http client.
+// These options are applied globally to all tests created via NewTestBuilder().
+//
 // Options:
 // - WithCustomHTTPTimeout - set timeout for all requests
 // - WithHTTPClient - set custom http client
@@ -29,6 +37,13 @@ type HTTPTestMaker struct {
 // - WithMiddlewareAfterT - set function which will run AFTER test execution with TB
 // - WithMiddlewareBefore - set function which will run BEFORE test execution
 // - WithMiddlewareBeforeT - set function which will run BEFORE test execution with TB
+// - WithRequestInformation - add request information handlers to capture request details
+// - WithRequestInformationT - add request information handlers with T context
+// - WithResponseInformation - add response information handlers to capture response details
+// - WithResponseInformationT - add response information handlers with T context
+//
+// Information handlers are executed for each test and their results are added to Allure reports.
+// Handlers can also be added per-test using builder methods like RequestInformation() and ResponseInformation().
 func NewHTTPTestMaker(opts ...Option) *HTTPTestMaker {
 	var (
 		o = &options{
@@ -66,9 +81,13 @@ func NewHTTPTestMaker(opts ...Option) *HTTPTestMaker {
 	}
 
 	m := &HTTPTestMaker{
-		httpClient:    httpClient,
-		jsonMarshaler: jsMarshaler,
-		middleware:    o.middleware,
+		httpClient:           httpClient,
+		jsonMarshaler:        jsMarshaler,
+		middleware:           o.middleware,
+		requestInformation:   o.requestInformation,
+		requestInformationT:  o.requestInformationT,
+		responseInformation:  o.responseInformation,
+		responseInformationT: o.responseInformationT,
 	}
 
 	return m
@@ -89,14 +108,63 @@ func (m *HTTPTestMaker) NewTestBuilder() AllureBuilder {
 	}
 }
 
+func createInformationHandlersFromTemplate(
+	m *HTTPTestMaker,
+	additionalReqInfo []RequestInformation,
+	additionalReqInfoT []RequestInformationT,
+	additionalRespInfo []ResponseInformation,
+	additionalRespInfoT []ResponseInformationT,
+) (
+	reqInfo []RequestInformation,
+	reqInfoT []RequestInformationT,
+	respInfo []ResponseInformation,
+	respInfoT []ResponseInformationT,
+) {
+	// Deep copy request handlers using slices.Clone, ensure non-nil slices
+	reqInfo = slices.Concat(m.requestInformation, additionalReqInfo)
+	if reqInfo == nil {
+		reqInfo = make([]RequestInformation, 0)
+	}
+	reqInfoT = slices.Concat(m.requestInformationT, additionalReqInfoT)
+	if reqInfoT == nil {
+		reqInfoT = make([]RequestInformationT, 0)
+	}
+
+	// Deep copy response handlers using slices.Clone, ensure non-nil slices
+	respInfo = slices.Concat(m.responseInformation, additionalRespInfo)
+	if respInfo == nil {
+		respInfo = make([]ResponseInformation, 0)
+	}
+	respInfoT = slices.Concat(m.responseInformationT, additionalRespInfoT)
+	if respInfoT == nil {
+		respInfoT = make([]ResponseInformationT, 0)
+	}
+
+	return
+}
+
 func createDefaultTests(m *HTTPTestMaker) []*Test {
 	tests := make([]*Test, 1)
-	tests[0] = createDefaultTest(m)
+	tests[0] = createDefaultTest(m, nil, nil, nil, nil)
 
 	return tests
 }
 
-func createDefaultTest(m *HTTPTestMaker) *Test {
+func createDefaultTest(
+	m *HTTPTestMaker,
+	reqInfo []RequestInformation,
+	reqInfoT []RequestInformationT,
+	respInfo []ResponseInformation,
+	respInfoT []ResponseInformationT,
+) *Test {
+	totalReqInfo, totalReqInfoT, totalRespInfo, totalRespInfoT := createInformationHandlersFromTemplate(
+		m,
+		reqInfo,
+		reqInfoT,
+		respInfo,
+		respInfoT,
+	)
+
 	return &Test{
 		httpClient:    m.httpClient,
 		jsonMarshaler: m.jsonMarshaler,
@@ -105,7 +173,11 @@ func createDefaultTest(m *HTTPTestMaker) *Test {
 		Request: &Request{
 			Retry: new(RequestRetryPolitic),
 		},
-		Expect: &Expect{JSONSchema: new(ExpectJSONSchema)},
+		Expect:               &Expect{JSONSchema: new(ExpectJSONSchema)},
+		RequestInformation:   totalReqInfo,
+		RequestInformationT:  totalReqInfoT,
+		ResponseInformation:  totalRespInfo,
+		ResponseInformationT: totalRespInfoT,
 	}
 }
 

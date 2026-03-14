@@ -4,14 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/ozontech/allure-go/pkg/allure"
-	"moul.io/http2curl/v2"
-
 	cuteErrors "github.com/ozontech/cute/errors"
 	"github.com/ozontech/cute/internal/utils"
 )
@@ -89,7 +85,7 @@ func (it *Test) doRequest(t T, baseReq *http.Request) (*http.Response, error) {
 			fmt.Sprintf("expected request to be completed in %v, but was not", it.Expect.ExecuteTime))
 	}
 
-	// http client has case wheh it return response and error in one time
+	// http client has case when it returns response and error in one time
 	// we have to check this case
 	if resp == nil {
 		if httpErr != nil {
@@ -144,59 +140,37 @@ func (it *Test) validateResponseCode(resp *http.Response) error {
 }
 
 func (it *Test) addInformationRequest(t T, req *http.Request) error {
-	var (
-		saveBody io.ReadCloser
-		err      error
-	)
-
+	// sanitize in any way
+	//  FIXME: why? this method must only pass parameters into T.
 	if it.RequestSanitizer != nil {
 		it.RequestSanitizer(req)
 	}
 
-	it.lastRequestURL = req.URL.String()
-
-	curl, err := http2curl.GetCurlCommand(req)
-	if err != nil {
-		return err
+	if len(it.RequestInformation)+len(it.RequestInformationT) == 0 {
+		return nil
 	}
 
-	if c := curl.String(); len(c) <= 2048 {
-		it.Info(t, "[Request] "+c)
-	} else {
-		it.Info(t, "[Request] Do request")
-	}
-
-	// Do not change to JSONMarshaler
-	// In this case we can keep default for keep JSON, independence from JSONMarshaler
-	headers, err := utils.ToJSON(req.Header)
-	if err != nil {
-		return err
-	}
-
-	t.WithParameters(
-		allure.NewParameters(
-			"method", req.Method,
-			"host", req.Host,
-			"headers", headers,
-			"curl", curl.String(),
-		)...,
-	)
-
-	if req.Body != nil {
-		saveBody, req.Body, err = utils.DrainBody(req.Body)
+	allParameters := make([]*allure.Parameter, 0, len(it.RequestInformation)+len(it.RequestInformationT))
+	for _, information := range it.RequestInformation {
+		parameters, err := information(req)
 		if err != nil {
 			return err
 		}
-
-		body, err := utils.GetBody(saveBody)
+		allParameters = append(allParameters, parameters...)
+	}
+	for _, information := range it.RequestInformationT {
+		parameters, err := information(t, req)
 		if err != nil {
 			return err
 		}
-
-		if len(body) != 0 {
-			t.WithNewParameters("body", string(body))
-		}
+		allParameters = append(allParameters, parameters...)
 	}
+
+	if len(allParameters) == 0 {
+		return nil
+	}
+
+	t.WithParameters(allParameters...)
 
 	return nil
 }
@@ -217,61 +191,37 @@ func copyRequest(ctx context.Context, req *http.Request) (*http.Request, error) 
 }
 
 func (it *Test) addInformationResponse(t T, response *http.Response) error {
-	var (
-		saveBody io.ReadCloser
-		err      error
-	)
-
+	// sanitize in any way
+	//  FIXME: why? this method must only pass parameters into T.
 	if it.ResponseSanitizer != nil {
 		it.ResponseSanitizer(response)
 	}
 
-	headers, _ := utils.ToJSON(response.Header)
-	if headers != "" {
-		t.WithNewParameters("response_headers", headers)
-	}
-
-	t.WithNewParameters("response_code", fmt.Sprint(response.StatusCode))
-	it.Info(t, "[Response] Status: "+response.Status)
-
-	if response.Body == nil {
+	if len(it.ResponseInformation)+len(it.ResponseInformationT) == 0 {
 		return nil
 	}
 
-	saveBody, response.Body, err = utils.DrainBody(response.Body)
-	// if could not get body from response, no add to allure
-	if err != nil {
-		return err
-	}
-
-	body, err := utils.GetBody(saveBody)
-	// if could not get body from response, no add to allure
-	if err != nil {
-		return err
-	}
-
-	// if body is empty - skip
-	if len(body) == 0 {
-		return nil
-	}
-
-	responseType := allure.Text
-
-	if _, ok := response.Header["Content-Type"]; ok {
-		if len(response.Header["Content-Type"]) > 0 {
-			if strings.Contains(response.Header["Content-Type"][0], "application/json") {
-				responseType = allure.JSON
-			} else {
-				responseType = allure.MimeType(response.Header["Content-Type"][0])
-			}
+	allParameters := make([]*allure.Parameter, 0, len(it.ResponseInformation)+len(it.ResponseInformationT))
+	for _, information := range it.ResponseInformation {
+		parameters, err := information(response)
+		if err != nil {
+			return err
 		}
+		allParameters = append(allParameters, parameters...)
+	}
+	for _, information := range it.ResponseInformationT {
+		parameters, err := information(t, response)
+		if err != nil {
+			return err
+		}
+		allParameters = append(allParameters, parameters...)
 	}
 
-	if responseType == allure.JSON {
-		body, _ = utils.PrettyJSON(body)
+	if len(allParameters) == 0 {
+		return nil
 	}
 
-	t.WithAttachments(allure.NewAttachment("response", responseType, body))
+	t.WithParameters(allParameters...)
 
 	return nil
 }
