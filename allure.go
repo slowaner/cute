@@ -108,3 +108,112 @@ func (qt *cute) setInfoAllure(t infoAllureProvider) {
 		t.Stage(qt.allureInfo.Stage)
 	}
 }
+
+func (it *Test) setAllureInformation(tp allureProvider) {
+	// Log main vars to allureProvider
+	it.setLabelsAllure(tp)
+	it.setInfoAllure(tp)
+	it.setLinksAllure(tp)
+}
+
+func (it *Test) setInfoAllure(tp infoAllureProvider) {
+	if it.AllureInfo.Title != "" {
+		tp.Title(it.AllureInfo.Title)
+	}
+
+	if it.AllureInfo.Description != "" {
+		tp.Description(it.AllureInfo.Description)
+	}
+
+	if it.AllureInfo.Stage != "" {
+		tp.Stage(it.AllureInfo.Stage)
+	}
+}
+
+func (it *Test) setLinksAllure(tp linksAllureProvider) {
+	if it.AllureLinks.Issue != "" {
+		tp.SetIssue(it.AllureLinks.Issue)
+	}
+
+	if it.AllureLinks.TestCase != "" {
+		tp.SetTestCase(it.AllureLinks.TestCase)
+	}
+
+	if it.AllureLinks.Link != nil {
+		tp.Link(it.AllureLinks.Link)
+	}
+
+	if it.AllureLinks.TmsLink != "" {
+		tp.TmsLink(it.AllureLinks.TmsLink)
+	}
+
+	if len(it.AllureLinks.TmsLinks) > 0 {
+		tp.TmsLinks(it.AllureLinks.TmsLinks...)
+	}
+}
+
+func (it *Test) setLabelsAllure(tp labelsAllureProvider) {
+	if it.AllureLabels.ID != "" {
+		tp.ID(it.AllureLabels.ID)
+	}
+
+	if it.AllureLabels.SuiteLabel != "" {
+		tp.AddSuiteLabel(it.AllureLabels.SuiteLabel)
+	}
+
+	if it.AllureLabels.SubSuite != "" {
+		tp.AddSubSuite(it.AllureLabels.SubSuite)
+	}
+
+	if it.AllureLabels.ParentSuite != "" {
+		tp.AddParentSuite(it.AllureLabels.ParentSuite)
+	}
+
+	if it.AllureLabels.Story != "" {
+		tp.Story(it.AllureLabels.Story)
+	}
+
+	if it.AllureLabels.Tag != "" {
+		tp.Tag(it.AllureLabels.Tag)
+	}
+
+	if it.AllureLabels.AllureID != "" {
+		tp.AllureID(it.AllureLabels.AllureID)
+	}
+
+	if it.AllureLabels.Severity != "" {
+		tp.Severity(it.AllureLabels.Severity)
+	}
+
+	if it.AllureLabels.Owner != "" {
+		tp.Owner(it.AllureLabels.Owner)
+	}
+
+	if it.AllureLabels.Lead != "" {
+		tp.Lead(it.AllureLabels.Lead)
+	}
+
+	if it.AllureLabels.Label != nil {
+		tp.Label(it.AllureLabels.Label)
+	}
+
+	if len(it.AllureLabels.Labels) != 0 {
+		tp.Labels(it.AllureLabels.Labels...)
+	}
+
+	if it.AllureLabels.Feature != "" {
+		tp.Feature(it.AllureLabels.Feature)
+	}
+
+	if it.AllureLabels.Epic != "" {
+		tp.Epic(it.AllureLabels.Epic)
+	}
+
+	if len(it.AllureLabels.Tags) != 0 {
+		tp.Tags(it.AllureLabels.Tags...)
+	}
+
+	if it.AllureLabels.Layer != "" {
+		tp.Layer(it.AllureLabels.Layer)
+	}
+}

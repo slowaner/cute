@@ -133,8 +133,10 @@ func (qt *cute) executeTests(ctx context.Context, allureProvider allureProvider)
 			tableTestName := currentTest.Name
 
 			allureProvider.Run(tableTestName, func(inT provider.T) {
-				// Set current test name
+				// Set current test info
+				qt.setAllureInformation(inT)
 				inT.Title(tableTestName)
+				currentTest.setAllureInformation(inT)
 
 				res = append(res, qt.executeInsideAllure(ctx, inT, currentTest))
 			})

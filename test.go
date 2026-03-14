@@ -44,8 +44,11 @@ type Test struct {
 	httpClient    *http.Client
 	jsonMarshaler JSONMarshaler
 
-	AllureInfo   AllureInformation
-	AllureLinks  AllureLinks
+	// Not applied if test is run as step
+	AllureInfo AllureInformation
+	// Not applied if test is run as step
+	AllureLinks AllureLinks
+	// Not applied if test is run as step
 	AllureLabels AllureLabels
 
 	Name     string

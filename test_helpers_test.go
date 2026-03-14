@@ -1,6 +1,7 @@
 package cute
 
 import (
+	"fmt"
 	"github.com/ozontech/allure-go/pkg/allure"
 	"github.com/ozontech/allure-go/pkg/framework/provider"
 	"strings"
@@ -11,10 +12,15 @@ type paramCaptureGetter interface {
 	newParamCapturing(name string) *paramCapture
 }
 
-// paramCapture holds captured parameters and attachments - shared across parent and child captureT instances
+// paramCapture holds captured parameters, attachments, and allure metadata - shared across parent and child captureT instances
 type paramCapture struct {
 	params      []*allure.Parameter
 	attachments []*allure.Attachment
+
+	// Allure metadata captures
+	allureInfo   AllureInformation
+	allureLinks  AllureLinks
+	allureLabels AllureLabels
 }
 
 // captureT embeds provider.T and captures all parameters passed to WithParameters and attachments
@@ -208,6 +214,174 @@ func (cs *captureStepCtx) WithNewStep(name string, step func(sCtx provider.StepC
 	}
 
 	cs.StepCtx.WithNewStep(name, wrappedStep, params...)
+}
+
+// Allure Info methods - infoAllureProvider
+func (c *captureT) Title(args ...interface{}) {
+	title := fmt.Sprint(args...)
+	c.captured.allureInfo.Title = title
+	c.T.Title(args...)
+}
+
+func (c *captureT) Titlef(format string, args ...interface{}) {
+	title := fmt.Sprintf(format, args...)
+	c.captured.allureInfo.Title = title
+	c.T.Titlef(format, args...)
+}
+
+func (c *captureT) Description(args ...interface{}) {
+	desc := fmt.Sprint(args...)
+	c.captured.allureInfo.Description = desc
+	c.T.Description(args...)
+}
+
+func (c *captureT) Descriptionf(format string, args ...interface{}) {
+	desc := fmt.Sprintf(format, args...)
+	c.captured.allureInfo.Description = desc
+	c.T.Descriptionf(format, args...)
+}
+
+func (c *captureT) Stage(args ...interface{}) {
+	stage := fmt.Sprint(args...)
+	c.captured.allureInfo.Stage = stage
+	c.T.Stage(args...)
+}
+
+func (c *captureT) Stagef(format string, args ...interface{}) {
+	stage := fmt.Sprintf(format, args...)
+	c.captured.allureInfo.Stage = stage
+	c.T.Stagef(format, args...)
+}
+
+// Allure Labels methods - labelsAllureProvider
+func (c *captureT) ID(value string) {
+	c.captured.allureLabels.ID = value
+	c.T.ID(value)
+}
+
+func (c *captureT) AllureID(value string) {
+	c.captured.allureLabels.AllureID = value
+	c.T.AllureID(value)
+}
+
+func (c *captureT) Epic(value string) {
+	c.captured.allureLabels.Epic = value
+	c.T.Epic(value)
+}
+
+func (c *captureT) Layer(value string) {
+	c.captured.allureLabels.Layer = value
+	c.T.Layer(value)
+}
+
+func (c *captureT) AddSuiteLabel(value string) {
+	c.captured.allureLabels.SuiteLabel = value
+	c.T.AddSuiteLabel(value)
+}
+
+func (c *captureT) AddSubSuite(value string) {
+	c.captured.allureLabels.SubSuite = value
+	c.T.AddSubSuite(value)
+}
+
+func (c *captureT) AddParentSuite(value string) {
+	c.captured.allureLabels.ParentSuite = value
+	c.T.AddParentSuite(value)
+}
+
+func (c *captureT) Feature(value string) {
+	c.captured.allureLabels.Feature = value
+	c.T.Feature(value)
+}
+
+func (c *captureT) Story(value string) {
+	c.captured.allureLabels.Story = value
+	c.T.Story(value)
+}
+
+func (c *captureT) Tag(value string) {
+	c.captured.allureLabels.Tag = value
+	c.T.Tag(value)
+}
+
+func (c *captureT) Tags(values ...string) {
+	c.captured.allureLabels.Tags = values
+	c.T.Tags(values...)
+}
+
+func (c *captureT) Severity(value allure.SeverityType) {
+	c.captured.allureLabels.Severity = value
+	c.T.Severity(value)
+}
+
+func (c *captureT) Owner(value string) {
+	c.captured.allureLabels.Owner = value
+	c.T.Owner(value)
+}
+
+func (c *captureT) Lead(value string) {
+	c.captured.allureLabels.Lead = value
+	c.T.Lead(value)
+}
+
+func (c *captureT) Label(label *allure.Label) {
+	c.captured.allureLabels.Label = label
+	c.T.Label(label)
+}
+
+func (c *captureT) Labels(labels ...*allure.Label) {
+	c.captured.allureLabels.Labels = labels
+	c.T.Labels(labels...)
+}
+
+// Allure Links methods - linksAllureProvider
+func (c *captureT) SetIssue(issue string) {
+	c.captured.allureLinks.Issue = issue
+	c.T.SetIssue(issue)
+}
+
+func (c *captureT) SetTestCase(testCase string) {
+	c.captured.allureLinks.TestCase = testCase
+	c.T.SetTestCase(testCase)
+}
+
+func (c *captureT) Link(link *allure.Link) {
+	c.captured.allureLinks.Link = link
+	c.T.Link(link)
+}
+
+func (c *captureT) TmsLink(tmsCase string) {
+	c.captured.allureLinks.TmsLink = tmsCase
+	c.T.TmsLink(tmsCase)
+}
+
+func (c *captureT) TmsLinks(tmsCases ...string) {
+	c.captured.allureLinks.TmsLinks = tmsCases
+	c.T.TmsLinks(tmsCases...)
+}
+
+// GetCapturedAllureInfo retrieves captured allure info for a test
+func (c *captureT) GetCapturedAllureInfo(testName string) AllureInformation {
+	if capture, ok := c.children[testName]; ok {
+		return capture.allureInfo
+	}
+	return AllureInformation{}
+}
+
+// GetCapturedAllureLabels retrieves captured allure labels for a test
+func (c *captureT) GetCapturedAllureLabels(testName string) AllureLabels {
+	if capture, ok := c.children[testName]; ok {
+		return capture.allureLabels
+	}
+	return AllureLabels{}
+}
+
+// GetCapturedAllureLinks retrieves captured allure links for a test
+func (c *captureT) GetCapturedAllureLinks(testName string) AllureLinks {
+	if capture, ok := c.children[testName]; ok {
+		return capture.allureLinks
+	}
+	return AllureLinks{}
 }
 
 // Helper function to find parameter by key
