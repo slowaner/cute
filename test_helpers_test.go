@@ -5,7 +5,6 @@ import (
 	"github.com/ozontech/allure-go/pkg/allure"
 	"github.com/ozontech/allure-go/pkg/framework/provider"
 	"strings"
-	"testing"
 )
 
 type paramCaptureGetter interface {
@@ -305,7 +304,7 @@ func (c *captureT) Tag(value string) {
 }
 
 func (c *captureT) Tags(values ...string) {
-	c.captured.allureLabels.Tags = values
+	c.captured.allureLabels.Tags = append(c.captured.allureLabels.Tags, values...)
 	c.T.Tags(values...)
 }
 
@@ -330,7 +329,7 @@ func (c *captureT) Label(label *allure.Label) {
 }
 
 func (c *captureT) Labels(labels ...*allure.Label) {
-	c.captured.allureLabels.Labels = labels
+	c.captured.allureLabels.Labels = append(c.captured.allureLabels.Labels, labels...)
 	c.T.Labels(labels...)
 }
 
@@ -356,7 +355,7 @@ func (c *captureT) TmsLink(tmsCase string) {
 }
 
 func (c *captureT) TmsLinks(tmsCases ...string) {
-	c.captured.allureLinks.TmsLinks = tmsCases
+	c.captured.allureLinks.TmsLinks = append(c.captured.allureLinks.TmsLinks, tmsCases...)
 	c.T.TmsLinks(tmsCases...)
 }
 
@@ -402,8 +401,4 @@ func findAttachment(attachments []*allure.Attachment, name string) *allure.Attac
 		}
 	}
 	return nil
-}
-
-func buildCapturedFinalName(t testing.TB, testName string) string {
-	return t.Name() + "/#00/" + testName
 }

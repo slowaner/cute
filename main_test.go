@@ -42,6 +42,9 @@ func TestMain(m *testing.M) {
 	testServerHostName = u.Hostname()
 	testServerPort = u.Port()
 
+	err = os.Setenv("ALLURE_ISSUE_PATTERN", testServerAddress+"/issue/%s")
+	err = os.Setenv("ALLURE_TESTCASE_PATTERN", testServerAddress+"/test_case/%s")
+	err = os.Setenv("ALLURE_LINK_TMS_PATTERN", testServerAddress+"/tms/%s")
 	outPath := getResultPath()
 	err = os.RemoveAll(outPath)
 	if err != nil {

@@ -9,99 +9,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestPlainBuilder_AllureInfoPropagation(t *testing.T) {
-	allureT := createAllureT(t)
-	capturedT := newCaptureT(allureT)
-
-	NewHTTPTestMaker().
-		NewTestBuilder().
-		Title("Test Title").
-		Description("Test Description").
-		Stage("Test Stage").
-		Create().
-		RequestBuilder(
-			WithMethod(http.MethodGet),
-			WithURI(testServerAddress),
-		).
-		ExpectStatus(200).
-		ExecuteTest(context.Background(), capturedT)
-
-	// Verify captured allure info
-	testName := capturedT.Name()
-	capturedInfo := capturedT.GetCapturedAllureInfo(testName)
-
-	res := allureT.GetResult()
-	t.Log(res.Name)
-	assert.Equal(t, "Test Title", capturedInfo.Title)
-	assert.Equal(t, "Test Description", capturedInfo.Description)
-	assert.Equal(t, "Test Stage", capturedInfo.Stage)
-}
-
-func TestPlainBuilder_AllureLabelsPropagation(t *testing.T) {
-	allureT := createAllureT(t)
-	capturedT := newCaptureT(allureT)
-
-	NewHTTPTestMaker().
-		NewTestBuilder().
-		Epic("Test Epic").
-		Feature("Test Feature").
-		Story("Test Story").
-		Tags("tag1", "tag2").
-		Severity(allure.CRITICAL).
-		Owner("test-owner").
-		Create().
-		RequestBuilder(
-			WithMethod(http.MethodGet),
-			WithURI(testServerAddress),
-		).
-		ExpectStatus(200).
-		ExecuteTest(context.Background(), capturedT)
-
-	// Verify captured allure labels
-	testName := capturedT.Name()
-	capturedLabels := capturedT.GetCapturedAllureLabels(testName)
-
-	assert.Equal(t, "Test Epic", capturedLabels.Epic)
-	assert.Equal(t, "Test Feature", capturedLabels.Feature)
-	assert.Equal(t, "Test Story", capturedLabels.Story)
-	assert.Equal(t, []string{"tag1", "tag2"}, capturedLabels.Tags)
-	assert.Equal(t, allure.CRITICAL, capturedLabels.Severity)
-	assert.Equal(t, "test-owner", capturedLabels.Owner)
-}
-
-func TestPlainBuilder_AllureLinksPropagation(t *testing.T) {
-	allureT := createAllureT(t)
-	capturedT := newCaptureT(allureT)
-
-	testLink := &allure.Link{
-		Name: "TestLink",
-		URL:  "http://example.com",
-		Type: "issue",
-	}
-
-	NewHTTPTestMaker().
-		NewTestBuilder().
-		SetIssue("ISSUE-123").
-		SetTestCase("TC-456").
-		Link(testLink).
-		TmsLink("TMS-789").
-		Create().
-		RequestBuilder(
-			WithMethod(http.MethodGet),
-			WithURI(testServerAddress),
-		).
-		ExpectStatus(200).
-		ExecuteTest(context.Background(), capturedT)
-
-	// Verify captured allure links
-	testName := capturedT.Name()
-	capturedLinks := capturedT.GetCapturedAllureLinks(testName)
-
-	assert.Equal(t, "ISSUE-123", capturedLinks.Issue)
-	assert.Equal(t, "TC-456", capturedLinks.TestCase)
-	assert.Equal(t, testLink, capturedLinks.Link)
-	assert.Equal(t, "TMS-789", capturedLinks.TmsLink)
-}
+// TableBuilder Tests - Only table tests validate Test struct field behavior
+// Note: Test-level AllureInfo/Links/Labels fields are only applied in table tests.
+// Plain builder tests would test builder methods, not Test struct field propagation.
 
 func TestTableBuilder_AllureFieldsPerTest(t *testing.T) {
 	allureT := createAllureT(t)
@@ -120,7 +30,7 @@ func TestTableBuilder_AllureFieldsPerTest(t *testing.T) {
 				Feature: "Feature1",
 			},
 			AllureLinks: AllureLinks{
-				Issue: "ISSUE-1",
+				TestCase: "TC-1",
 			},
 			Request: &Request{
 				Builders: []RequestBuilder{
@@ -143,7 +53,7 @@ func TestTableBuilder_AllureFieldsPerTest(t *testing.T) {
 				Feature: "Feature2",
 			},
 			AllureLinks: AllureLinks{
-				Issue: "ISSUE-2",
+				TestCase: "TC-2",
 			},
 			Request: &Request{
 				Builders: []RequestBuilder{
@@ -164,24 +74,22 @@ func TestTableBuilder_AllureFieldsPerTest(t *testing.T) {
 		ExecuteTest(context.Background(), capturedT)
 
 	// Verify test1 captured data
-	test1Name := buildCapturedFinalName(t, "test1")
-	captured1Info := capturedT.GetCapturedAllureInfo(test1Name)
-	captured1Labels := capturedT.GetCapturedAllureLabels(test1Name)
-	captured1Links := capturedT.GetCapturedAllureLinks(test1Name)
+	captured1Info := capturedT.GetCapturedAllureInfo("test1")
+	captured1Labels := capturedT.GetCapturedAllureLabels("test1")
+	captured1Links := capturedT.GetCapturedAllureLinks("test1")
 
 	assert.Equal(t, "Test 1 Title", captured1Info.Title)
 	assert.Equal(t, "Epic1", captured1Labels.Epic)
-	assert.Equal(t, "ISSUE-1", captured1Links.Issue)
+	assert.Equal(t, "TC-1", captured1Links.TestCase)
 
 	// Verify test2 captured data
-	test2Name := buildCapturedFinalName(t, "test2")
-	captured2Info := capturedT.GetCapturedAllureInfo(test2Name)
-	captured2Labels := capturedT.GetCapturedAllureLabels(test2Name)
-	captured2Links := capturedT.GetCapturedAllureLinks(test2Name)
+	captured2Info := capturedT.GetCapturedAllureInfo("test2")
+	captured2Labels := capturedT.GetCapturedAllureLabels("test2")
+	captured2Links := capturedT.GetCapturedAllureLinks("test2")
 
 	assert.Equal(t, "Test 2 Title", captured2Info.Title)
 	assert.Equal(t, "Epic2", captured2Labels.Epic)
-	assert.Equal(t, "ISSUE-2", captured2Links.Issue)
+	assert.Equal(t, "TC-2", captured2Links.TestCase)
 }
 
 func TestTableBuilder_CombinedBuilderAndTestFields(t *testing.T) {
@@ -216,10 +124,162 @@ func TestTableBuilder_CombinedBuilderAndTestFields(t *testing.T) {
 		ExecuteTest(context.Background(), capturedT)
 
 	// Verify both builder and test fields are present
-	testName := buildCapturedFinalName(t, "test_with_own_fields")
-	capturedLabels := capturedT.GetCapturedAllureLabels(testName)
+	capturedLabels := capturedT.GetCapturedAllureLabels("test_with_own_fields")
 
 	assert.Equal(t, "Builder Epic", capturedLabels.Epic)
 	assert.Equal(t, "Builder Feature", capturedLabels.Feature)
 	assert.Equal(t, "Test Story Override", capturedLabels.Story)
+}
+
+func TestTableBuilder_TestFieldsOverrideBuilder(t *testing.T) {
+	allureT := createAllureT(t)
+	capturedT := newCaptureT(allureT)
+
+	// Test with conflicting builder-level and test-level fields
+	// Validates that test-level fields override builder-level fields
+	tests := []*Test{
+		{
+			Name: "test_with_overrides",
+			AllureInfo: AllureInformation{
+				Title:       "Test Level Title",
+				Description: "Test Level Description",
+			},
+			AllureLabels: AllureLabels{
+				Epic:    "Test Level Epic",
+				Feature: "Test Level Feature",
+			},
+			AllureLinks: AllureLinks{
+				TestCase: "TEST-TC-123",
+			},
+			Request: &Request{
+				Builders: []RequestBuilder{
+					WithMethod(http.MethodGet),
+					WithURI(testServerAddress),
+				},
+			},
+			Expect: &Expect{
+				Code: 200,
+			},
+		},
+	}
+
+	NewHTTPTestMaker().
+		NewTestBuilder().
+		Title("Builder Level Title").
+		Description("Builder Level Description").
+		Epic("Builder Level Epic").
+		Feature("Builder Level Feature").
+		SetTestCase("BUILDER-TC-456").
+		CreateTableTest().
+		PutTests(tests...).
+		ExecuteTest(context.Background(), capturedT)
+
+	// Verify test-level fields override builder-level fields
+	capturedInfo := capturedT.GetCapturedAllureInfo("test_with_overrides")
+	capturedLabels := capturedT.GetCapturedAllureLabels("test_with_overrides")
+	capturedLinks := capturedT.GetCapturedAllureLinks("test_with_overrides")
+
+	// Test-level values should win
+	assert.Equal(t, "Test Level Title", capturedInfo.Title)
+	assert.Equal(t, "Test Level Description", capturedInfo.Description)
+	assert.Equal(t, "Test Level Epic", capturedLabels.Epic)
+	assert.Equal(t, "Test Level Feature", capturedLabels.Feature)
+	assert.Equal(t, "TEST-TC-123", capturedLinks.TestCase)
+}
+
+func TestTableBuilder_SliceFieldsCombined(t *testing.T) {
+	allureT := createAllureT(t)
+	capturedT := newCaptureT(allureT)
+
+	// Test that slice fields are combined, not overridden
+	// Builder sets Tags=["builder-tag1", "builder-tag2"]
+	// Test sets Tags=["test-tag3"]
+	// Result should contain all tags: ["builder-tag1", "builder-tag2", "test-tag3"]
+	tests := []*Test{
+		{
+			Name: "test_combined_slices",
+			AllureLabels: AllureLabels{
+				Tags: []string{"test-tag3", "test-tag4"},
+			},
+			AllureLinks: AllureLinks{
+				TmsLinks: []string{"TEST-TMS-789", "TEST-TMS-890"},
+			},
+			Request: &Request{
+				Builders: []RequestBuilder{
+					WithMethod(http.MethodGet),
+					WithURI(testServerAddress),
+				},
+			},
+			Expect: &Expect{
+				Code: 200,
+			},
+		},
+	}
+
+	NewHTTPTestMaker().
+		NewTestBuilder().
+		Tags("builder-tag1", "builder-tag2").
+		TmsLinks("BUILDER-TMS-123", "BUILDER-TMS-456").
+		CreateTableTest().
+		PutTests(tests...).
+		ExecuteTest(context.Background(), capturedT)
+
+	// Verify slice fields are combined
+	capturedLabels := capturedT.GetCapturedAllureLabels("test_combined_slices")
+	capturedLinks := capturedT.GetCapturedAllureLinks("test_combined_slices")
+
+	// Tags should contain both builder and test tags
+	assert.Equal(t, []string{"builder-tag1", "builder-tag2", "test-tag3", "test-tag4"}, capturedLabels.Tags)
+	// TmsLinks should contain both builder and test TMS links
+	assert.Equal(t, []string{"BUILDER-TMS-123", "BUILDER-TMS-456", "TEST-TMS-789", "TEST-TMS-890"}, capturedLinks.TmsLinks)
+}
+
+func TestTableBuilder_TestExecuteAppliesStructValues(t *testing.T) {
+	allureT := createAllureT(t)
+	capturedT := newCaptureT(allureT)
+
+	// Test that Test.Execute() applies AllureInfo/Links/Labels from struct
+	testWithAllure := &Test{
+		Name: "direct_execute_test",
+		AllureInfo: AllureInformation{
+			Title:       "Direct Execute Title",
+			Description: "Direct Execute Description",
+			Stage:       "Direct Execute Stage",
+		},
+		AllureLabels: AllureLabels{
+			Epic:     "Direct Epic",
+			Feature:  "Direct Feature",
+			Story:    "Direct Story",
+			Severity: "critical",
+		},
+		AllureLinks: AllureLinks{
+			TestCase: "DIRECT-TC-999",
+		},
+		Request: &Request{
+			Builders: []RequestBuilder{
+				WithMethod(http.MethodGet),
+				WithURI(testServerAddress),
+			},
+		},
+		Expect: &Expect{
+			Code: 200,
+		},
+	}
+
+	// Execute the test directly
+	testWithAllure.Execute(context.Background(), capturedT)
+
+	// Verify allure fields from struct were applied
+	capturedInfo := capturedT.GetCapturedAllureInfo("direct_execute_test")
+	capturedLabels := capturedT.GetCapturedAllureLabels("direct_execute_test")
+	capturedLinks := capturedT.GetCapturedAllureLinks("direct_execute_test")
+
+	assert.Equal(t, "Direct Execute Title", capturedInfo.Title)
+	assert.Equal(t, "Direct Execute Description", capturedInfo.Description)
+	assert.Equal(t, "Direct Execute Stage", capturedInfo.Stage)
+	assert.Equal(t, "Direct Epic", capturedLabels.Epic)
+	assert.Equal(t, "Direct Feature", capturedLabels.Feature)
+	assert.Equal(t, "Direct Story", capturedLabels.Story)
+	assert.Equal(t, allure.SeverityType("critical"), capturedLabels.Severity)
+	assert.Equal(t, "DIRECT-TC-999", capturedLinks.TestCase)
 }
