@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/ozontech/cute"
+	"github.com/slowaner/cute"
 )
 
 func TestUploadFile(t *testing.T) {

@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/ozontech/allure-go/pkg/framework/provider"
-	"github.com/ozontech/cute"
-	"github.com/ozontech/cute/examples"
+	"github.com/slowaner/cute"
+	"github.com/slowaner/cute/examples"
 )
 
 /*

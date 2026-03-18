@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/ozontech/allure-go/pkg/framework/provider"
-	"github.com/ozontech/cute"
+	"github.com/slowaner/cute"
 )
 
 func Test_Async_1(t *testing.T) {

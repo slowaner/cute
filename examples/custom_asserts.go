@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/ozontech/allure-go/pkg/allure"
-	"github.com/ozontech/cute"
-	cuteErrors "github.com/ozontech/cute/errors"
+	"github.com/slowaner/cute"
+	cuteErrors "github.com/slowaner/cute/errors"
 	"github.com/stretchr/testify/require"
 )
 

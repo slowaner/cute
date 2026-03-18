@@ -17,10 +17,10 @@ import (
 	"github.com/ozontech/allure-go/pkg/allure"
 	"github.com/ozontech/allure-go/pkg/framework/provider"
 	"github.com/ozontech/allure-go/pkg/framework/runner"
-	cuteErrors "github.com/ozontech/cute/errors"
+	cuteErrors "github.com/slowaner/cute/errors"
 
-	"github.com/ozontech/cute"
-	"github.com/ozontech/cute/asserts/json"
+	"github.com/slowaner/cute"
+	"github.com/slowaner/cute/asserts/json"
 )
 
 func Test_Single_1(t *testing.T) {

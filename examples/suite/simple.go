@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/ozontech/allure-go/pkg/framework/provider"
-	"github.com/ozontech/cute"
+	"github.com/slowaner/cute"
 )
 
 /*

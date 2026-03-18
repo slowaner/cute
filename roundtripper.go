@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/ozontech/allure-go/pkg/allure"
-	cuteErrors "github.com/ozontech/cute/errors"
-	"github.com/ozontech/cute/internal/utils"
+	cuteErrors "github.com/slowaner/cute/errors"
+	"github.com/slowaner/cute/internal/utils"
 )
 
 func (it *Test) makeRequest(t internalT, req *http.Request) (*http.Response, []error) {

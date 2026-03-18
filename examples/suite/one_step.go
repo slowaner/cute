@@ -8,10 +8,10 @@ import (
 	"time"
 
 	"github.com/ozontech/allure-go/pkg/framework/provider"
-	"github.com/ozontech/cute"
-	"github.com/ozontech/cute/asserts/headers"
-	"github.com/ozontech/cute/asserts/json"
-	"github.com/ozontech/cute/examples"
+	"github.com/slowaner/cute"
+	"github.com/slowaner/cute/asserts/headers"
+	"github.com/slowaner/cute/asserts/json"
+	"github.com/slowaner/cute/examples"
 )
 
 /*

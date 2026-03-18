@@ -3,7 +3,7 @@ package cute
 import (
 	"testing"
 
-	cuteErrors "github.com/ozontech/cute/errors"
+	cuteErrors "github.com/slowaner/cute/errors"
 	"github.com/stretchr/testify/require"
 )
 

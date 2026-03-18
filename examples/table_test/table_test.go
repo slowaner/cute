@@ -13,9 +13,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ozontech/cute"
-	"github.com/ozontech/cute/asserts/json"
-	"github.com/ozontech/cute/errors"
+	"github.com/slowaner/cute"
+	"github.com/slowaner/cute/asserts/json"
+	"github.com/slowaner/cute/errors"
 )
 
 func init() {

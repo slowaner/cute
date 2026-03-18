@@ -1,4 +1,4 @@
-module github.com/ozontech/cute
+module github.com/slowaner/cute
 
 go 1.25
 

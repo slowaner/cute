@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/ohler55/ojg/oj"
-	"github.com/ozontech/cute/errors"
+	"github.com/slowaner/cute/errors"
 )
 
 // Contains is a function to assert that a jsonpath expression extracts a value in an array

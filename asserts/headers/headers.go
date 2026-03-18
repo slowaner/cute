@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/ozontech/cute"
-	"github.com/ozontech/cute/errors"
+	"github.com/slowaner/cute"
+	"github.com/slowaner/cute/errors"
 )
 
 // Present is a function to asserts that header is present

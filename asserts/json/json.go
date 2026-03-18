@@ -6,8 +6,8 @@ import (
 	jd "github.com/josephburnett/jd/lib"
 	"github.com/ohler55/ojg/jp"
 	"github.com/ohler55/ojg/oj"
-	"github.com/ozontech/cute"
-	cuteErrors "github.com/ozontech/cute/errors"
+	"github.com/slowaner/cute"
+	cuteErrors "github.com/slowaner/cute/errors"
 )
 
 // Diff is a function to compare two jsons

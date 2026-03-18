@@ -7,7 +7,7 @@ import (
 	"github.com/ozontech/allure-go/pkg/framework/suite"
 	"github.com/stretchr/testify/require"
 
-	"github.com/ozontech/cute"
+	"github.com/slowaner/cute"
 )
 
 type ExampleSuite struct {

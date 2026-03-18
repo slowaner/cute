@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"runtime"
 
-	"github.com/ozontech/cute/errors"
+	"github.com/slowaner/cute/errors"
 )
 
 // assertHeadersWithTrace is a function to add trace inside assert headers error

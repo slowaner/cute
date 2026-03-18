@@ -3,7 +3,7 @@ package cute
 import (
 	"fmt"
 
-	"github.com/ozontech/cute/errors"
+	"github.com/slowaner/cute/errors"
 	"github.com/xeipuuv/gojsonschema"
 )
 

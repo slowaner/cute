@@ -2,7 +2,7 @@ package cute
 
 import (
 	"github.com/ozontech/allure-go/pkg/allure"
-	"github.com/ozontech/cute/internal/utils"
+	"github.com/slowaner/cute/internal/utils"
 	"io"
 	"net/http"
 	"strings"

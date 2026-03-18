@@ -5,7 +5,7 @@ import (
 
 	"github.com/ozontech/allure-go/pkg/allure"
 	"github.com/ozontech/allure-go/pkg/framework/provider"
-	"github.com/ozontech/cute/errors"
+	"github.com/slowaner/cute/errors"
 )
 
 func (it *Test) executeWithStep(t internalT, stepName string, execute func(t T) []error) []error {

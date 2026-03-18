@@ -15,8 +15,8 @@ import (
 
 	"github.com/ozontech/allure-go/pkg/framework/provider"
 
-	cuteErrors "github.com/ozontech/cute/errors"
-	"github.com/ozontech/cute/internal/utils"
+	cuteErrors "github.com/slowaner/cute/errors"
+	"github.com/slowaner/cute/internal/utils"
 )
 
 const (

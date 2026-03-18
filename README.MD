@@ -48,7 +48,7 @@ HTTP and REST API testing for Go using Allure reports.
 ## Installation
 
 ```bash
-  go get -u github.com/ozontech/cute
+  go get -u github.com/slowaner/cute
 ```
 
 ## Requirements
@@ -93,8 +93,8 @@ import (
     "testing"
     "time"
 
-    "github.com/ozontech/cute"
-    "github.com/ozontech/cute/asserts/json"
+    "github.com/slowaner/cute"
+    "github.com/slowaner/cute/asserts/json"
 )
 
 func TestExample(t *testing.T) {
@@ -134,7 +134,7 @@ import (
     "net/http"
     "testing"
 
-    "github.com/ozontech/cute"
+    "github.com/slowaner/cute"
 )
     
 func Test_TwoSteps(t *testing.T) {
@@ -190,7 +190,7 @@ Suite provides a structure for describing tests by organizing them into test sui
 
 ```go
 import (
-    "github.com/ozontech/cute"
+    "github.com/slowaner/cute"
     "github.com/ozontech/allure-go/pkg/framework/provider"
     "github.com/ozontech/allure-go/pkg/framework/suite"
 )
@@ -232,9 +232,9 @@ func TestExampleTest(t *testing.T) {
 
 ```go
 import (
-    "github.com/ozontech/cute"
-    "github.com/ozontech/cute/asserts/headers"
-    "github.com/ozontech/cute/asserts/json"
+    "github.com/slowaner/cute"
+    "github.com/slowaner/cute/asserts/headers"
+    "github.com/slowaner/cute/asserts/json"
 )
 
 func (i *ExampleSuite) TestExample_OneStep(t provider.T) {
@@ -303,7 +303,7 @@ import (
     "net/http"
     "testing"
 
-    "github.com/ozontech/cute"
+    "github.com/slowaner/cute"
 )
 
 func Test_Table_Array(t *testing.T) {
@@ -441,7 +441,7 @@ You can create your own asserts or use ready-made from the package asserts.
 
 [Learn more about expressions](https://goessner.net/articles/JsonPath/)
 
-[Learn more about asserts implementation](https://github.com/ozontech/cute/blob/master/asserts/json/json.go)
+[Learn more about asserts implementation](https://github.com/slowaner/cute/blob/master/asserts/json/json.go)
 
 #### <h4><a href="asserts/headers">Headers asserts</a></h4>
 
@@ -557,8 +557,8 @@ Example:
 
 ```go
 import (
-    "github.com/ozontech/cute"
-    "github.com/ozontech/cute/errors"
+    "github.com/slowaner/cute"
+    "github.com/slowaner/cute/errors"
 )
 
 func customAssertBodyWithCustomError() cute.AssertBody {
@@ -606,8 +606,8 @@ You can use  `errors.NewOptionalError(error)` method from [errors](errors/error.
 
 ```go
 import (
-    "github.com/ozontech/cute"
-    "github.com/ozontech/cute/errors"
+    "github.com/slowaner/cute"
+    "github.com/slowaner/cute/errors"
 )
 
 func customAssertBodyWithCustomError() cute.AssertBody {
